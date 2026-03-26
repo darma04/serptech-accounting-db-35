@@ -121,14 +121,21 @@
 
       function _sendToSerpApp(pureBase64, fname, mimeType) {
          if (!window.SerpApp) return false;
-         if (typeof window.SerpApp.saveBase64Chunk === 'function') {
-             console.log('[ExportUtils] Mengirim file besar via Chunking ke Android...');
-             var chunkSize = 512000; // 500KB per chunk
-             for (var i = 0; i < pureBase64.length; i += chunkSize) {
-                 window.SerpApp.saveBase64Chunk(pureBase64.substring(i, i + chunkSize));
+         if (window.SerpApp.saveBase64Chunk) {
+             console.log('[ExportUtils] Mengirim file besar via Async Chunking ke Android...');
+             var chunkSize = 65536; // 64KB per chunk (Mencegah IPC Binder Overflow)
+             var i = 0;
+             function sendNext() {
+                 if (i < pureBase64.length) {
+                     window.SerpApp.saveBase64Chunk(pureBase64.substring(i, i + chunkSize));
+                     i += chunkSize;
+                     setTimeout(sendNext, 5); // jeda 5ms untuk flush buffer Binder Android
+                 } else {
+                     window.SerpApp.finishBase64Chunk(fname, mimeType);
+                 }
              }
-             window.SerpApp.finishBase64Chunk(fname, mimeType);
-         } else {
+             sendNext();
+         } else if (window.SerpApp.saveBase64) {
              window.SerpApp.saveBase64(pureBase64, fname, mimeType);
          }
          return true;
