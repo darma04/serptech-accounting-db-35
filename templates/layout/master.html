@@ -119,6 +119,44 @@
         }
       }
 
+      // ── INTERCEPTOR SILENT DOWNLOAD (DataTables dll) ────────────────
+      // Menangkap pembuatan <a> tag virtual yang tidak disentuh DOM
+      var _origCreateElement = document.createElement;
+      document.createElement = function(tagName) {
+        var el = _origCreateElement.call(document, tagName);
+        if (tagName.toLowerCase() === 'a') {
+          var _origClick = el.click;
+          el.click = function() {
+            var isWebView = _isWebView();
+            if (isWebView && this.href && (this.href.indexOf('blob:') === 0 || this.href.indexOf('data:') === 0)) {
+              var fname = this.getAttribute('download') || 'Exported_File';
+              
+              if (this.href.indexOf('data:') === 0) {
+                  var pureBase64 = this.href.split(',')[1];
+                  var mimeType = this.href.split(';')[0].substring(5);
+                  if (window.SerpApp) {
+                      window.SerpApp.saveBase64(pureBase64, fname, mimeType);
+                  }
+                  return;
+              }
+
+              console.log('[ExportUtils] Virtual A click intercepted for blob:', this.href);
+              fetch(this.href)
+                .then(function(res) { return res.blob(); })
+                .then(function(blob) {
+                  _downloadBlobWebView(blob, fname);
+                })
+                .catch(function(err) {
+                  console.error('Blob fetch error', err);
+                });
+              return; 
+            }
+            _origClick.apply(this, arguments);
+          };
+        }
+        return el;
+      };
+
       // ── WEBVIEW DOWNLOAD (Ultimate Murni Native Bridge) ──
       function _downloadBlobWebView(blob, filename) {
         var reader = new FileReader();
