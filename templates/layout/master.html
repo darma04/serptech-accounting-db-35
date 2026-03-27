@@ -179,13 +179,24 @@
       }
 
       // ── 4. KONVERSI BLOB KE BASE64 DAN KIRIM ──────────────────────
-      function _blobToNative(blob, filename) {
+      function _downloadBlobWebView(blob, filename) {
           var reader = new FileReader();
           reader.onloadend = function() {
               var base64data = reader.result;
               var pureBase64 = base64data.split(',')[1];
               if (pureBase64) {
-                  _sendToSerpApp(pureBase64, filename, blob.type || 'application/octet-stream');
+                  if (window.SerpApp) {
+                      _sendToSerpApp(pureBase64, filename, blob.type || 'application/octet-stream');
+                  } else {
+                      // Fallback jika SerpApp belum injeksi tapi dideteksi WebView
+                      var a = document.createElement('a');
+                      a.href = base64data;
+                      a.download = filename;
+                      a.style.display = 'none';
+                      document.body.appendChild(a);
+                      a.click();
+                      setTimeout(function() { document.body.removeChild(a); }, 1000);
+                  }
               }
           };
           reader.readAsDataURL(blob);
@@ -208,12 +219,12 @@
                   
                   if (cachedBlob) {
                       // JALUR UTAMA: Gunakan blob yang sudah di-cache (PALING CEPAT & AMAN)
-                      _blobToNative(cachedBlob, fname);
+                      _downloadBlobWebView(cachedBlob, fname);
                   } else {
                       // JALUR CADANGAN: Fetch blob dari URL (jika tidak ada di cache)
                       fetch(blobUrl)
                           .then(function(res) { return res.blob(); })
-                          .then(function(blob) { _blobToNative(blob, fname); })
+                          .then(function(blob) { _downloadBlobWebView(blob, fname); })
                           .catch(function(err) { console.error('[ExportUtils] Blob fetch gagal:', err); });
                   }
                   return; // Hentikan click asli agar WebView tidak bingung
