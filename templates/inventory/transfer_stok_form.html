@@ -214,15 +214,13 @@
                             <i class="ri-add-line me-1"></i> Tambah Produk
                         </button>
 
-                        <div class="row justify-content-end">
-                            <div class="col-sm-10">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="ri-save-line me-1"></i> Simpan Transfer
-                                </button>
-                                <a href="{% url 'inventory:transfer' %}" class="btn btn-outline-secondary">
-                                    <i class="ri-close-line me-1"></i> Batal
-                                </a>
-                            </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="ri-save-line me-1"></i> Simpan Transfer
+                            </button>
+                            <a href="{% url 'inventory:transfer' %}" class="btn btn-outline-secondary">
+                                <i class="ri-close-line me-1"></i> Batal
+                            </a>
                         </div>
                     </form>
                 </div>

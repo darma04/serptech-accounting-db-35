@@ -1,7 +1,7 @@
 {% extends layout_path %}
 {% comment %}
 ==========================================================================
-   FRAUD DETECTION DASHBOARD - Grafik gelombang (ApexCharts Area) + Doughnut
+FRAUD DETECTION DASHBOARD - Grafik gelombang (ApexCharts Area) + Doughnut
 ==========================================================================
 {% endcomment %}
 {% load static %}
@@ -23,15 +23,27 @@
 {{ block.super }}
 <link rel="stylesheet" href="{% static 'vendor/css/pages/cards-statistics.css' %}" />
 <style>
-  .fraud-stat-card .avatar-initial {
-    width: 42px;
-    height: 42px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    flex-shrink: 0;
-  }
+    .fraud-stat-card .avatar-initial {
+        width: 42px;
+        height: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        flex-shrink: 0;
+    }
+    @media (max-width: 575.98px) {
+        .fraud-stat-card {
+            gap: 0.75rem !important;
+        }
+        .fraud-stat-card .avatar-initial {
+            width: 36px;
+            height: 36px;
+        }
+        .fraud-stat-card .avatar-initial i {
+            font-size: 18px;
+        }
+    }
 </style>
 {% endblock page_css %}
 
@@ -43,7 +55,7 @@
 
     <!-- Row 1: Summary Cards -->
     <div class="row g-6 mb-6">
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -61,7 +73,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -79,7 +91,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -97,7 +109,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -125,7 +137,8 @@
                     <div>
                         <h6 class="text-white mb-1 fw-semibold">Total Aset Asli Keseluruhan</h6>
                         <h3 class="text-white mb-1 fw-bold">Rp {{ total_aset_asli|floatformat:0 }}</h3>
-                        <small class="text-white-50">Σ (stok + terjual + adjustment) × harga beli — termasuk data belum dikonfirmasi</small>
+                        <small class="text-white-50">Σ (stok + terjual + adjustment) × harga beli — termasuk data belum
+                            dikonfirmasi</small>
                     </div>
                     <div class="d-none d-sm-block">
                         <i class="ri-safe-2-line" style="font-size: 4rem; color: rgba(255,255,255,0.2);"></i>
@@ -136,10 +149,10 @@
     </div>
 
     {# ─── Row 3: Cards Keuangan / Aset / Nominal dengan Aksi Detail ─── #}
-    {# Menampilkan gambaran finansial keseluruhan + selisih kas kasir   #}
+    {# Menampilkan gambaran finansial keseluruhan + selisih kas kasir #}
     <div class="row g-6 mb-6">
         {# Card: Total Pemasukan — seluruh pendapatan dari POS + Sales Order #}
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -163,7 +176,7 @@
             </div>
         </div>
         {# Card: Total Pengeluaran — biaya dari Purchase Order + Biaya operasional #}
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
@@ -187,18 +200,20 @@
             </div>
         </div>
         {# Card: Selisih Keuangan — laba/rugi (pemasukan - pengeluaran) #}
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
                         <div class="avatar flex-shrink-0">
-                            <span class="avatar-initial rounded bg-label-{% if selisih_keuangan >= 0 %}info{% else %}warning{% endif %}">
+                            <span
+                                class="avatar-initial rounded bg-label-{% if selisih_keuangan >= 0 %}info{% else %}warning{% endif %}">
                                 <i class="ri-exchange-dollar-line ri-24px"></i>
                             </span>
                         </div>
                         <div class="flex-grow-1">
                             <span class="d-block text-muted small">Selisih Keuangan</span>
-                            <h5 class="mb-0 fw-bold {% if selisih_keuangan >= 0 %}text-info{% else %}text-warning{% endif %}">
+                            <h5
+                                class="mb-0 fw-bold {% if selisih_keuangan >= 0 %}text-info{% else %}text-warning{% endif %}">
                                 Rp {{ selisih_keuangan|floatformat:0 }}
                             </h5>
                             <small class="text-muted">Pemasukan - Pengeluaran</small>
@@ -213,18 +228,20 @@
             </div>
         </div>
         {# Card: Selisih Kas — total selisih rekonsiliasi kasir per shift #}
-        <div class="col-sm-6 col-xl-3">
+        <div class="col-6 col-xl-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 fraud-stat-card">
                         <div class="avatar flex-shrink-0">
-                            <span class="avatar-initial rounded bg-label-{% if total_selisih_kas < 0 %}danger{% else %}success{% endif %}">
+                            <span
+                                class="avatar-initial rounded bg-label-{% if total_selisih_kas < 0 %}danger{% else %}success{% endif %}">
                                 <i class="ri-safe-2-line ri-24px"></i>
                             </span>
                         </div>
                         <div class="flex-grow-1">
                             <span class="d-block text-muted small">Selisih Kas Kasir</span>
-                            <h5 class="mb-0 fw-bold {% if total_selisih_kas < 0 %}text-danger{% else %}text-success{% endif %}">
+                            <h5
+                                class="mb-0 fw-bold {% if total_selisih_kas < 0 %}text-danger{% else %}text-success{% endif %}">
                                 Rp {{ total_selisih_kas|floatformat:0 }}
                             </h5>
                             <small class="text-muted">Rekonsiliasi Shift</small>
@@ -292,7 +309,8 @@
                     <h5 class="card-title mb-0">
                         <i class="ri-user-warning-line me-2"></i>Top 5 Karyawan Berisiko
                     </h5>
-                    <a href="{% url 'fraud_detection:alert_list' %}" class="btn btn-sm btn-label-primary">Lihat Semua</a>
+                    <a href="{% url 'fraud_detection:alert_list' %}" class="btn btn-sm btn-label-primary">Lihat
+                        Semua</a>
                 </div>
                 <div class="card-body">
                     {% if risk_users %}
@@ -312,10 +330,13 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="avatar avatar-sm">
                                                 <span class="avatar-initial rounded-circle bg-label-danger">
-                                                    {{ u.user_terkait__first_name|default:u.user_terkait__username|first|upper }}
+                                                    {{
+                                                    u.user_terkait__first_name|default:u.user_terkait__username|first|upper
+                                                    }}
                                                 </span>
                                             </div>
-                                            <span>{{ u.user_terkait__first_name }} {{ u.user_terkait__last_name|default:"" }}</span>
+                                            <span>{{ u.user_terkait__first_name }} {{
+                                                u.user_terkait__last_name|default:"" }}</span>
                                         </div>
                                     </td>
                                     <td class="text-center">
@@ -363,11 +384,13 @@
                                 <tr>
                                     <td>{{ r.kasir.get_full_name|default:r.kasir.username }}</td>
                                     <td>{{ r.gudang.nama|default:"-" }}</td>
-                                    <td class="text-end fw-semibold {% if r.discrepancy < 0 %}text-danger{% elif r.discrepancy > 0 %}text-success{% endif %}">
+                                    <td
+                                        class="text-end fw-semibold {% if r.discrepancy < 0 %}text-danger{% elif r.discrepancy > 0 %}text-success{% endif %}">
                                         Rp {{ r.discrepancy|floatformat:0 }}
                                     </td>
                                     <td class="text-center">
-                                        <span class="badge bg-label-{% if r.status == 'matched' %}success{% elif r.status == 'unmatched' %}danger{% else %}warning{% endif %}">
+                                        <span
+                                            class="badge bg-label-{% if r.status == 'matched' %}success{% elif r.status == 'unmatched' %}danger{% else %}warning{% endif %}">
                                             {{ r.get_status_display }}
                                         </span>
                                     </td>
@@ -393,18 +416,19 @@
 {% block page_js %}
 {{ block.super }}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // ═══ DETEKSI DARK MODE ═══
-    var isDark = typeof isDarkStyle !== 'undefined' ? isDarkStyle :
-                 (document.documentElement.classList.contains('dark-style') ||
-                  document.body.classList.contains('dark-style'));
+    document.addEventListener('DOMContentLoaded', function () {
+        // ═══ DETEKSI DARK MODE ═══
+        var isDark = typeof isDarkStyle !== 'undefined' ? isDarkStyle :
+            (document.documentElement.classList.contains('dark-style') ||
+                document.body.classList.contains('dark-style'));
 
-    var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
-    var labelColor = isDark ? '#b4b5ba' : '#a5a3ae';
+        var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+        var labelColor = isDark ? '#b4b5ba' : '#a5a3ae';
 
-    // ═══ TREN ANOMALI — ApexCharts Area (Wave) ═══
-    var trendLabels = {{ trend_labels|safe }};
-    var trendValues = {{ trend_values|safe }};
+        // ═══ TREN ANOMALI — ApexCharts Area (Wave) ═══
+        var trendLabels = {{ trend_labels| safe
+    }};
+    var trendValues = {{ trend_values| safe }};
 
     if (trendLabels.length > 0 && document.querySelector('#trendAnomalyChart')) {
         var trendOptions = {
@@ -459,14 +483,14 @@ document.addEventListener('DOMContentLoaded', function() {
             yaxis: {
                 labels: {
                     style: { colors: labelColor, fontSize: '13px' },
-                    formatter: function(val) { return Math.round(val); }
+                    formatter: function (val) { return Math.round(val); }
                 }
             },
             tooltip: {
                 theme: isDark ? 'dark' : 'light',
                 shared: true, intersect: false,
                 style: { fontSize: '13px' },
-                y: { formatter: function(val) { return val + ' anomali'; } },
+                y: { formatter: function (val) { return val + ' anomali'; } },
                 marker: { show: true }
             },
             legend: { show: false },
@@ -488,8 +512,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ═══ DISTRIBUSI JENIS — ApexCharts Donut ═══
-    var jenisLabels = {{ jenis_labels|safe }};
-    var jenisValues = {{ jenis_values|safe }};
+    var jenisLabels = {{ jenis_labels| safe }};
+    var jenisValues = {{ jenis_values| safe }};
 
     if (jenisLabels.length > 0 && document.querySelector('#jenisDistChart')) {
         var chartColors = ['#7367f0', '#28c76f', '#ff9f43', '#ea5455', '#00cfe8', '#a855f7', '#f472b6'];
@@ -517,13 +541,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             value: {
                                 show: true, fontSize: '18px', fontWeight: 700,
                                 color: isDark ? '#fff' : '#333',
-                                formatter: function(val) { return val; }
+                                formatter: function (val) { return val; }
                             },
                             total: {
                                 show: true, label: 'Total',
                                 color: labelColor,
-                                formatter: function(w) {
-                                    return w.globals.spieSeries.reduce(function(a, b) { return a + b; }, 0);
+                                formatter: function (w) {
+                                    return w.globals.spieSeries.reduce(function (a, b) { return a + b; }, 0);
                                 }
                             }
                         }
@@ -539,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             tooltip: {
                 theme: isDark ? 'dark' : 'light',
-                y: { formatter: function(val) { return val + ' kasus'; } }
+                y: { formatter: function (val) { return val + ' kasus'; } }
             }
         };
 

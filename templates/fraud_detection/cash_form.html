@@ -66,10 +66,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-12 text-end">
-                                <button type="submit" class="btn btn-primary btn-lg">
+                            <div class="col-12 mt-2">
+                                <button type="submit" class="btn btn-primary btn-lg me-2">
                                     <i class="ri-check-line me-1"></i>Submit & Tutup Shift
                                 </button>
+                                <a href="{% url 'fraud_detection:cash_list' %}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="ri-close-line me-1"></i> Batal
+                                </a>
                             </div>
                         </div>
                     </form>
