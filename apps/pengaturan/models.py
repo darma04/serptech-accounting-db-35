@@ -44,7 +44,7 @@ class PengaturanPerusahaan(models.Model):
     website = models.URLField(blank=True, null=True, verbose_name="Website")
     
     # System Settings / Meta Configuration
-    system_title = models.CharField(max_length=200, default='SERPGROUP ERP System', verbose_name="Judul Sistem")
+    system_title = models.CharField(max_length=200, default='SERPTECH', verbose_name="Judul Sistem")
     # system_description — Teks panjang
     system_description = models.TextField(
         blank=True, 
@@ -165,7 +165,7 @@ class PengaturanPerusahaan(models.Model):
         """Memuat pengaturan perusahaan (buat baru jika belum ada)"""
         obj, created = cls.objects.get_or_create(
             pk=1,
-            defaults={'nama_perusahaan': 'SERPGROUP'}
+            defaults={'nama_perusahaan': 'SERPTECH'}
         )
         return obj
 
@@ -188,7 +188,7 @@ class TemplateCetak(models.Model):
     jenis = models.CharField(max_length=20, choices=JENIS_TEMPLATE, unique=True, verbose_name="Jenis Dokumen")
     
     # Informasi Header Dokumen
-    header_nama_perusahaan = models.CharField(max_length=200, default="SINTSGROUP", verbose_name="Nama Perusahaan")
+    header_nama_perusahaan = models.CharField(max_length=200, default="SERPTECH", verbose_name="Nama Perusahaan")
     # header_alamat — Teks panjang
     header_alamat = models.TextField(default="Jl. Contoh Alamat No. 123, Jakarta 12345", verbose_name="Alamat")
     # header_telepon — Teks pendek
@@ -203,7 +203,7 @@ class TemplateCetak(models.Model):
     # footer_keterangan — Teks pendek
     footer_keterangan = models.CharField(max_length=200, default="Dokumen ini dicetak secara otomatis dan sah tanpa tanda tangan.", verbose_name="Keterangan")
     # footer_copyright — Teks pendek
-    footer_copyright = models.CharField(max_length=200, default="© 2026 SINTSGROUP", verbose_name="Footer Copyright")
+    footer_copyright = models.CharField(max_length=200, default="© 2026 SERPTECH", verbose_name="Footer Copyright")
     
     # Label Tanda Tangan
     signature_kiri_label = models.CharField(max_length=50, default="Disetujui Oleh", verbose_name="Label Tanda Tangan Kiri")
@@ -263,19 +263,19 @@ class TemplateCetak(models.Model):
             },
             'export_excel': {
                 'nama': 'Template Export Excel',
-                'header_nama_perusahaan': 'SINTSGROUP',
+                'header_nama_perusahaan': 'SERPTECH',
                 'header_alamat': 'Jl. Bisnis Raya No. 123, Jakarta Selatan 12345',
                 'header_telepon': 'Telp: (021) 1234-5678',
                 'header_email': 'info@starterkit-erp.com',
-                'footer_copyright': '© 2026 SINTSGROUP',
+                'footer_copyright': '© 2026 SERPTECH',
             },
             'export_pdf': {
                 'nama': 'Template Export PDF',
-                'header_nama_perusahaan': 'SINTSGROUP',
+                'header_nama_perusahaan': 'SERPTECH',
                 'header_alamat': 'Jl. Bisnis Raya No. 123, Jakarta Selatan 12345',
                 'header_telepon': 'Telp: (021) 1234-5678',
                 'header_email': 'info@starterkit-erp.com',
-                'footer_copyright': '© 2026 SINTSGROUP',
+                'footer_copyright': '© 2026 SERPTECH',
             },
             'slip_gaji': {
                 'nama': 'Template Slip Gaji Default',
@@ -299,13 +299,13 @@ class TemplateCetak(models.Model):
         }
         
         base_defaults = {
-            'header_nama_perusahaan': 'SINTSGROUP',
+            'header_nama_perusahaan': 'SERPTECH',
             'header_alamat': 'Jl. Contoh Alamat No. 123, Jakarta 12345',
             'header_telepon': '(021) 1234-5678',
             'header_email': 'info@starterkit.com',
             'footer_ucapan': 'Terima kasih atas kepercayaan Anda!',
             'footer_keterangan': 'Dokumen ini dicetak secara otomatis dan sah tanpa tanda tangan.',
-            'footer_copyright': '© 2026 SINTSGROUP',
+            'footer_copyright': '© 2026 SERPTECH',
         }
         
         # Merge with specific defaults
