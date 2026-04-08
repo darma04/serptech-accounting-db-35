@@ -297,19 +297,7 @@
 </head>
 
 <body>
-    <!-- Tombol kontrol (tidak tercetak) -->
-    <div class="print-controls no-print">
-        <button class="primary" onclick="window.print()">🖨️ Cetak Struk</button>
-        <button onclick="window.close()">✕ Tutup</button>
-    </div>
 
-    <!-- Pilih ukuran kertas (tidak tercetak) -->
-    <div class="paper-selector no-print">
-        <a href="?format=thermal&paper=58" class="{% if paper_width == '58' %}active{% endif %}">58mm</a>
-        <a href="?format=thermal&paper=80" class="{% if paper_width == '80' %}active{% endif %}">80mm</a>
-    </div>
-
-    <!-- ===== STRUK ===== -->
     <div class="receipt">
 
         <!-- HEADER TOKO -->
@@ -415,13 +403,33 @@
     </div>
 
     <script>
-        // Auto-print saat halaman dimuat
-        window.onload = function () {
-            // Beri sedikit delay agar rendering selesai
-            setTimeout(function() {
-                window.print();
-            }, 500);
-        }
+        // Smart Print Handler — Popup cetak langsung, kembali otomatis setelah selesai/batal
+        (function() {
+            var printed = false;
+
+            function goBack() {
+                if (document.referrer && document.referrer !== '') { window.location.href = document.referrer; }
+                else if (window.history.length > 1) { window.history.back(); }
+                else { window.close(); }
+            }
+
+            function doPrint() {
+                if (printed) return;
+                printed = true;
+                // Langsung panggil window.print() untuk semua platform
+                if (typeof window.print === 'function') {
+                    try { window.print(); } catch(e) { goBack(); }
+                }
+            }
+
+            if (document.readyState === 'complete') { setTimeout(doPrint, 400); }
+            else { window.addEventListener('load', function() { setTimeout(doPrint, 400); }); }
+
+            // Setelah print selesai ATAU dibatalkan dari popup: otomatis kembali
+            window.addEventListener('afterprint', function() {
+                setTimeout(goBack, 200);
+            });
+        })();
     </script>
 </body>
 

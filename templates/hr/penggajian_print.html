@@ -284,68 +284,32 @@
 
     </div>
 
-    <!-- Tombol Kembali (fallback untuk Android WebView) -->
-    <div id="backBtnWrap" class="no-print" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999;">
-        <a id="backBtn" href="javascript:void(0)" style="display:inline-block; padding:12px 32px; background:#696cff; color:#fff; text-decoration:none; border-radius:8px; font-size:14px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-            ← Kembali
-        </a>
-    </div>
-
     <script>
+        // Smart Print Handler — Popup cetak langsung, kembali otomatis setelah selesai/batal
         (function() {
-            var printed = false, afterPrintFired = false;
-            var ua = navigator.userAgent || '';
-            var isAndroidWebView = (/Android/i.test(ua) && (/wv\b/i.test(ua) || /Version\/[\d.]+/i.test(ua) || !/Chrome\/[\d.]+/i.test(ua) || /\bTWA\b/i.test(ua)));
-            var isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+            var printed = false;
 
             function goBack() {
                 if (document.referrer && document.referrer !== '') { window.location.href = document.referrer; }
                 else if (window.history.length > 1) { window.history.back(); }
                 else { window.close(); }
             }
-            var backBtn = document.getElementById('backBtn');
-            if (backBtn) { backBtn.addEventListener('click', function(e) { e.preventDefault(); goBack(); }); }
-
-            function showBackButton() {
-                if (!afterPrintFired) { var wrap = document.getElementById('backBtnWrap'); if (wrap) wrap.style.display = 'block'; }
-            }
-
-            function createMobileToolbar() {
-                var wrap = document.getElementById('backBtnWrap');
-                if (wrap) {
-                    wrap.innerHTML = '';
-                    wrap.style.cssText = 'display:flex;gap:12px;align-items:center;justify-content:center;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;';
-                    var printBtn = document.createElement('a');
-                    printBtn.href = 'javascript:void(0)';
-                    printBtn.innerHTML = '🖨️ Cetak';
-                    printBtn.style.cssText = 'display:inline-block;padding:12px 28px;background:#696cff;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                    printBtn.addEventListener('click', function(e) { e.preventDefault(); try { window.print(); } catch(err) { alert('Fitur cetak tidak tersedia pada perangkat ini.'); } });
-                    var backBtnNew = document.createElement('a');
-                    backBtnNew.href = 'javascript:void(0)';
-                    backBtnNew.innerHTML = '← Kembali';
-                    backBtnNew.style.cssText = 'display:inline-block;padding:12px 28px;background:#8592a3;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                    backBtnNew.addEventListener('click', function(e) { e.preventDefault(); goBack(); });
-                    wrap.appendChild(printBtn);
-                    wrap.appendChild(backBtnNew);
-                }
-            }
 
             function doPrint() {
                 if (printed) return;
                 printed = true;
-                if (isAndroidWebView || isMobile) {
-                    createMobileToolbar();
-                    if (typeof window.print === 'function') { try { window.print(); } catch(e) {} }
-                } else {
-                    if (typeof window.print === 'function') { window.print(); }
-                    setTimeout(showBackButton, 3000);
+                // Langsung panggil window.print() untuk semua platform
+                if (typeof window.print === 'function') {
+                    try { window.print(); } catch(e) { goBack(); }
                 }
             }
+
             if (document.readyState === 'complete') { setTimeout(doPrint, 400); }
             else { window.addEventListener('load', function() { setTimeout(doPrint, 400); }); }
+
+            // Setelah print selesai ATAU dibatalkan dari popup: otomatis kembali
             window.addEventListener('afterprint', function() {
-                afterPrintFired = true;
-                if (!isMobile) { setTimeout(goBack, 200); }
+                setTimeout(goBack, 200);
             });
         })();
     </script>

@@ -421,35 +421,10 @@
         </table>
     </div>
 
-    <!-- Tombol Kembali (fallback untuk Android WebView) -->
-    <div id="backBtnWrap" class="no-print" style="display:none; position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:9999;">
-        <a id="backBtn" href="javascript:void(0)" style="display:inline-block; padding:12px 32px; background:#696cff; color:#fff; text-decoration:none; border-radius:8px; font-size:14px; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
-            ← Kembali
-        </a>
-    </div>
-
     <script>
-        // Smart Print Handler — kompatibel dengan Desktop, Mobile, Android WebView
+        // Smart Print Handler — Popup cetak langsung, kembali otomatis setelah selesai/batal
         (function() {
             var printed = false;
-            var afterPrintFired = false;
-
-            // Deteksi Android WebView (TWA, WebView, Custom Tabs)
-            var ua = navigator.userAgent || '';
-            var isAndroidWebView = (
-                /Android/i.test(ua) && (
-                    /wv\b/i.test(ua) ||           // Android WebView indicator
-                    /Version\/[\d.]+/i.test(ua) || // WebView via Version string
-                    !/Chrome\/[\d.]+/i.test(ua) || // Bukan Chrome standalone
-                    /\bTWA\b/i.test(ua)            // Trusted Web Activity
-                )
-            );
-            // Deteksi lebih luas: semua Android (termasuk Chrome mobile)
-            var isAndroid = /Android/i.test(ua);
-            // Deteksi iOS
-            var isIOS = /iPhone|iPad|iPod/i.test(ua);
-            // Apakah perangkat mobile?
-            var isMobile = isAndroid || isIOS;
 
             // Navigasi kembali ke halaman sebelumnya
             function goBack() {
@@ -462,92 +437,18 @@
                 }
             }
 
-            // Tombol kembali handler
-            var backBtn = document.getElementById('backBtn');
-            if (backBtn) {
-                backBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    goBack();
-                });
-            }
-
-            // Tampilkan tombol kembali
-            function showBackButton() {
-                if (!afterPrintFired) {
-                    var wrap = document.getElementById('backBtnWrap');
-                    if (wrap) wrap.style.display = 'block';
-                }
-            }
-
-            // Buat toolbar aksi untuk mobile/WebView
-            function createMobileToolbar() {
-                var wrap = document.getElementById('backBtnWrap');
-                if (wrap) {
-                    wrap.innerHTML = '';
-                    wrap.style.display = 'flex';
-                    wrap.style.gap = '12px';
-                    wrap.style.alignItems = 'center';
-                    wrap.style.justifyContent = 'center';
-                    wrap.style.position = 'fixed';
-                    wrap.style.bottom = '20px';
-                    wrap.style.left = '50%';
-                    wrap.style.transform = 'translateX(-50%)';
-                    wrap.style.zIndex = '9999';
-
-                    // Tombol Print
-                    var printBtn = document.createElement('a');
-                    printBtn.href = 'javascript:void(0)';
-                    printBtn.innerHTML = '🖨️ Cetak';
-                    printBtn.style.cssText = 'display:inline-block;padding:12px 28px;background:#696cff;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                    printBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        try {
-                            window.print();
-                        } catch(err) {
-                            alert('Fitur cetak tidak tersedia pada perangkat ini. Silakan gunakan browser Chrome untuk mencetak.');
-                        }
-                    });
-
-                    // Tombol Kembali
-                    var backBtnNew = document.createElement('a');
-                    backBtnNew.href = 'javascript:void(0)';
-                    backBtnNew.innerHTML = '← Kembali';
-                    backBtnNew.style.cssText = 'display:inline-block;padding:12px 28px;background:#8592a3;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
-                    backBtnNew.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        goBack();
-                    });
-
-                    wrap.appendChild(printBtn);
-                    wrap.appendChild(backBtnNew);
-                }
-            }
-
             function doPrint() {
                 if (printed) return;
                 printed = true;
-
-                if (isAndroidWebView || isMobile) {
-                    // Pada Android WebView/Mobile: tampilkan toolbar langsung
-                    // karena window.print() mungkin tidak menampilkan print dialog
-                    createMobileToolbar();
-
-                    // Tetap coba panggil window.print() pada mobile browser
-                    // yang mendukung (Chrome, Firefox mobile)
-                    if (typeof window.print === 'function') {
-                        try {
-                            window.print();
-                        } catch(e) {
-                            // Gagal print di mobile — toolbar sudah ditampilkan
-                        }
-                    }
-                } else {
-                    // Desktop: langsung panggil window.print()
-                    if (typeof window.print === 'function') {
+                // Langsung panggil window.print() untuk semua platform
+                // (Desktop, Mobile browser, Android WebView)
+                if (typeof window.print === 'function') {
+                    try {
                         window.print();
+                    } catch(e) {
+                        // Gagal cetak — langsung kembali
+                        goBack();
                     }
-                    // Fallback: Jika afterprint tidak fire dalam 3 detik
-                    setTimeout(showBackButton, 3000);
                 }
             }
 
@@ -560,13 +461,9 @@
                 });
             }
 
-            // Setelah print selesai/dibatalkan, kembali otomatis (desktop)
-            // Pada mobile, toolbar tetap ditampilkan agar user bisa navigasi
+            // Setelah print selesai ATAU dibatalkan dari popup: otomatis kembali
             window.addEventListener('afterprint', function() {
-                afterPrintFired = true;
-                if (!isMobile) {
-                    setTimeout(goBack, 200);
-                }
+                setTimeout(goBack, 200);
             });
         })();
     </script>
