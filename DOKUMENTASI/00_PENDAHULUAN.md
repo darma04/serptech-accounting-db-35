@@ -154,7 +154,7 @@ TAHAP 4: Sistem Lanjutan
 
     ↓
 
-TAHAP 5: Optimasi & Polish (Terbaru)
+TAHAP 5: Optimasi & Polish
 ├── Permission caching (1 query/role vs 20-40 query/page)
 ├── PO/SO auto-product-creation (SKU auto-generate, markup 20%)
 ├── Transfer Stock Select2 AJAX searchable
@@ -165,6 +165,17 @@ TAHAP 5: Optimasi & Polish (Terbaru)
 ├── Dark mode perbaikan kontras & sidebar
 ├── Komentar lengkap di SEMUA file (Python, HTML, JS, CSS)
 └── Dokumentasi 18 file markdown
+
+    ↓
+
+TAHAP 6: Standarisasi Produksi, Security & AI (Terbaru)
+├── Integrasi AI NLP Telegram Bot via Groq API (ERP Data Context)
+├── Pengaturan Custom AI Prompt berbasis Role (UI Settings)
+├── Refaktor layout xhtml2pdf menjadi `<table>` (100% Visual Parity)
+├── Smart Print handler untuk Android WebView (Mobile UI Sync)
+├── Proteksi brute-force dengan sistem `rate_limit_view` decorator
+├── Optimasi deployment Production (Nginx, Gunicorn & Error 404/500)
+└── Resolusi Path Image Dinamis via Custom `link_callback` (PDF Logo)
 ```
 
 ---

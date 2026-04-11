@@ -26,7 +26,7 @@ starter-kit/                    ← ROOT PROJECT (folder utama)
 │   └── asgi.py                 ← Entry point async (untuk WebSocket — belum dipakai)
 │
 ├── apps/                       ← ★ MODUL-MODUL ERP (semua logika bisnis di sini)
-│   ├── core/                   ← Inti: RBAC Permission, Mixins, Template Filters
+│   ├── core/                   ← Inti: RBAC Permission, Telegram AI Bot, Utils PDF, Mixins
 │   ├── dashboard/              ← Halaman dashboard utama
 │   ├── produk/                 ← Produk, Kategori, Satuan
 │   ├── inventory/              ← Gudang, Stok, Transfer, Adjustment
@@ -50,6 +50,7 @@ starter-kit/                    ← ROOT PROJECT (folder utama)
 │   ├── models.py               ← Model Profile (extend User bawaan Django)
 │   ├── views.py                ← View Login, Register, Forgot Password
 │   ├── urls.py                 ← URL routing halaman auth
+│   ├── rate_limit.py           ← Proteksi Keamanan Autentikasi (Rate Limiter Anti Brute-Force)
 │   └── admin.py                ← Registrasi Profile di Django Admin panel
 │
 ├── templates/                  ← ★ FILE HTML TEMPLATE (tampilan halaman)

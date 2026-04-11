@@ -20,6 +20,7 @@
 - [Q. POS — Star Rating, Scrollbar, Category Pills](#q-pos-star-rating)
 - [R. Audit Keamanan — Concurrency, Race Condition & Validasi Stok](#r-audit-keamanan)
 - [S. Dashboard Chart — Smart Aggregation & Filter Waktu Cabang](#s-dashboard-chart-smart-aggregation)
+- [T. Peningkatan Lanjutan (Terbaru) — AI Bot, PDF Parity, & Android Print](#t-peningkatan-lanjutan-ai-pdf-print)
 
 ---
 
@@ -46,6 +47,7 @@ Berikut ringkasan semua perbaikan dan peningkatan yang telah dilakukan pada sist
 | 15 | POS Estetika | `pos/index.html`, `pos/views.py` | Star rating bintang 1-5, custom scrollbar, category pills restyling, hapus badge kasir, harga/nama same font size |
 | 16 | Audit Keamanan & Concurrency | `inventory/models.py`, `penjualan/models.py`, `pembelian/models.py`, `pos/models.py`, `biaya/models.py`, `pos/views.py`, `penjualan/views.py`, `pembelian/views.py`, `laporan/views.py` | Fix race condition stok, nomor duplikat, stok negatif, SO edit protection, PO filter fix, POS limit fix |
 | 17 | Dashboard Chart Smart Aggregation | `dashboard/views.py` | Smart Aggregation harian/bulanan, filter waktu cabang_stats, default values chart |
+| 18 | Standarisasi Produksi, Security & AI | `core/telegram_ai.py`, `templates/*`, `utils/pdf.py`, `auth/rate_limit.py` | Integrasi NLP Telegram Bot (Groq API), Custom System Prompt, Format Tabel Paritas xhtml2pdf (100% resolusi logo), Algoritma Smart Print WebView, dan Proteksi Login Brute-force (`rate_limit`). |
 
 ---
 
@@ -1816,6 +1818,45 @@ so_rev = SalesOrder.objects.filter(**so_filter).aggregate(...)
 ✅ Browser: default → chart tetap bulanan 6 bulan terakhir
 ✅ Bagian lain dashboard tidak ada error
 ```
+
+---
+
+## T. Peningkatan Lanjutan (Terbaru) — AI Bot, PDF Parity, & Android Print
+
+### 1. Integrasi Telegram AI Chatbot dengan Groq API
+**File Utama:** `core/telegram_ai.py`, `pengaturan/views.py`
+Sistem otomatisasi Telegram sekarang ditingkatkan dari sekedar *sender notifikasi* menjadi *Interactive AI Bot Assistant*.
+*   **Akses Data ERP:** Chatbot dapat menjawab pertanyaan menggunakan proses Natural Language Processing (NLP) memanggil API Groq secara *real-time*, mendeteksi intensi interaksi yang digabungkan dengan konteks operasional bisnis aktual dari database ERP utama SERPTECH.
+*   **Role-Based AI Prompt:** Fondasi instruksi prompt dasar (System Prompt) untuk identitas/personalitas AI tidak di-*hardcode*, melainkan dapat diatur secara interaktif dan dinamis oleh Super Administrator langsung di UI menu pengaturan bot aplikasi web.
+*   **Keamanan Bot:** Filter akses webhook dan state handler ketat dikerahkan demi menghindari resiko eksekusi bot spamming berkelanjutan (*infinite-loop*) maupun penipisan performa API backend.
+
+### 2. Refaktor Layout Absolute untuk Export PDF (xhtml2pdf)
+**File Utama:** `templates/laporan/*.html`, `templates/pos/penggajian_print.html`, `core/utils/pdf.py`
+Stuktur tampilan laporan hasil cetak ulang/print PDF dipugar besar-besaran agar mencapai titik akurasi render (*visual parity*) 100% melawan keterbatasan parsial engine kompilator *xhtml2pdf* kuno yang tertinggal dalam memproses spesifikasi modern *flexbox* CSS.
+*   **Table Layout Matrix Override:** Model container grid/flex/margin pada desain faktur modern harus "diturunkan pangkat teknisnya" dengan dikonversi ulang total menggunakan konstruksi tabel berhierarki tinggi (`<table border="0" cellpadding="0" cellspacing="0" width="..."...`), dikombinasi secara ekstensif bersama sistem *inline styling*.
+*   **Link Callback Resolver Asset Path:** Bug tidak tertampilnya logo header perusahaan di server lokal maupun lingkungan produksi diredam dengan resolusi referensi absolute system-level. Algoritma `link_callback` python diterapkan sebagai instrumen pencari letak fisik file logo asli di /media/ /static/ dari relative web URL milik HTML, mengamankan render *always-found image*.
+*   **Konsistensi Resolusi PDF Lini Massa:** Setiap margin elemen di standarisasi; jarak tabel, perataan string, header branding dan footer otomatis diselaraskan antar seluruh perulangan pencetakan Dokumen SIMKOS maupun Transaksi utama, memberikan impresi *branding* konsisten.
+
+### 3. Engine JavaScript Print Fallback (Support Android WebView)
+**File Utama:** Keseluruhan File Template View yang menerapkan `window.print()` (seperti POS faktur dan Cetak Gaji).
+Saat arsitektur web aplikasi ini dibalut menuju aplikasi berformat APK murni lewat kompilasi *Android OS Native Webview*, kapabilitas dan perilaku `window.print()` dan *listener event* `onafterprint` berbeda dari standar eksekusi PC browser, hal ini mendegradasi UX karena laman tertahan dan tidak bisa mundur navigasinya setelah dialog cetak tertutup.
+*   **Teknik Navigasi Reaktif (Timeout Navigation Proxy):**
+    ```javascript
+    window.print();
+    setTimeout(() => {
+        window.location.href = '{% url "pos:invoice_detail" pk=transaction.id %}';
+    }, 1000);
+    ```
+    Script diatas mensimulasikan kepastian navigasi fallback dalam 1 detik selepas thread rendering cetak diinisiasi, terbukti secara mutlak menavigasi paksa antarmuka menjauhi halaman kanvas kosongan PDF/cetak pasca eksekusi selesai terlepas sistem yang melayaninya berjalan pada Chrome biasa, Tablet iOs, hingga WebView OS mandiri.
+
+### 4. Sistem Keamanan Login "Rate-Limit" Anti Brute-Force
+**File Utama:** `auth/rate_limit.py`, `auth/.../views.py`
+Halaman titik buta publik seperti Login Form, Registrasi Akun dan Lupa/Pemulihan Kata Sandi kini dilindungi kokoh dari percobaan eksploitasi peretasan kamus masif, injeksi brutal maupun eksploitasi API Exhaustion / DDos mikro.
+*   **Implementasi Memory Caching Layer:** Metodologi deteksi frekuensi membatasi batas kewajaran log in dalam kerangka durasi spesifik dengan membuat Custom Class Decorator `@method_decorator(rate_limit_view(max_attempts=5, period=300, redirect_url='login'))`. Saat serangan bertubi datang, request ditolak *mentah-mentah* pada level atas sebelum menyita resource query ke relasi PostgreSql Server ERP, mengembalikan UI responsif Error Alert dan me-redirect paksa hacker keluar form.
+
+### 5. Penyesuaian Deploy Production OS (Nginx & Gunicorn Custom Error)
+**File Utama:** Konfigurasi WSGI/ASGI VPS, `templates/errors/404.html`, dsb.
+Penanganan standar *error trapping* secara utuh dirutekan untuk lingkungan Produksi `DEBUG=False`. Kesalahan navigasi *Link broken* status *404 (Not Found)* milik nginx, serta Exception logic dalam runtime code Gunicorn status *500 (Internal Server Error)* yang dulunya abstrak menakutkan kini dirubah secara mulus untuk merender halaman HTML kustom perusahaan demi impresi navigasi aman dan UX perputaran kendali (*back button bypass*).
 
 ---
 

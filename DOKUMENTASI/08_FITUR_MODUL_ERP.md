@@ -317,17 +317,18 @@ Pencatatan pengeluaran operasional (sewa, listrik, gaji, marketing). CRUD sederh
 
 ---
 
-## 10. Automation / Telegram Bot (`apps/automation/`) — `/automation/`
+## 10. Automation / Telegram Bot AI (`apps/automation/`, `core/telegram_ai.py`) — `/automation/`
 
-**Fungsi:** Integrasi **Telegram Bot** untuk notifikasi otomatis event bisnis.
+**Fungsi:** Integrasi **Telegram Bot** untuk mengirim notifikasi otomatis event bisnis, serta **Interactive AI Chatbot Assistant** berbasis Natural Language Processing (NLP) yang mampu menjawab query tentang ERP melalui API eksternal (Groq Llama).
 
 ### Halaman:
 | URL | Fungsi |
 |-----|--------|
-| `/automation/telegram/` | Konfigurasi Telegram Bot |
-| `/automation/telegram/test/` | Kirim pesan test |
+| `/automation/telegram/` | Konfigurasi Webhook & Push Token Telegram Bot |
+| `/automation/telegram/ai-prompt/` | Pengaturan Role-Based AI System Prompt |
+| `/automation/telegram/test/` | Kirim pesan broadcast percobaan |
 
-### Notifikasi yang Dikirim:
+### Vektor Fungsi 1: Push Notifikasi (Satu Arah)
 ```
 📦 Purchase Order Baru
    PO-2026-0042 telah dibuat oleh Admin
@@ -337,19 +338,29 @@ Pencatatan pengeluaran operasional (sewa, listrik, gaji, marketing). CRUD sederh
 📊 Stok Habis Alert
    ⚠️ Beras Premium — Stok: 3 unit (minimum: 10)
    Segera buat Purchase Order!
-
-💰 Sales Order Baru
-   SO-2026-0088 — Customer: Toko Makmur
-   Total: Rp 2.350.000
 ```
 
-### Cara Kerja:
+### Vektor Fungsi 2: AI Assistant NLP (Dua Arah)
+Modul pintar telah ditautkan pada Webhook Telegram bot kita yang mengedepankan logika:
+1. **Penerimaan Chat Pengguna Terotentikasi:** Pesan masuk lewat webhook → cek perizinan RBAC.
+2. **Context Aggregation (Database Crawler):** Mengumpulkan matriks total kas/pengeluaran/stok harian ERP (*Real-Time*).
+3. **Pemuatan System Prompt:** Menarik Custom AI System Prompt yang disimpan dari UI Settings *(Misalkan: "Kamu adalah asisten toko elektronik bernama Jojo")* untuk mendelegasi identitas.
+4. **NLP API Processing:** Keseluruhan data dan System Prompt di-*dispatch* ke LLM Model canggih **Groq API** (latency ultra-rendah).
+5. **Autoreply Humanized:** Balasan dikembalikan ke end-user di Telegram layaknya percakapan akuntan/manager bisnis manusiawi.
+
+**Contoh Pertanyaan User di Telegram (Interactive):**
+*   *"Tolong hitungkan sisa saldo semua metode pembayaran kita dong."*
+*   *"Ada produk yang hampir habis nggak di gudang jakarta?"*
+
+### Cara Kerja Arsitektur:
 ```
-Event di Django (PO/SO/Stok) ──→ Signal handler ──→ Telegram API
-                                                       │
-                                                       ▼
-                                                   Group Chat
-                                                   Telegram
+[Event PO/SO/Stok] ──→ Django Signals ──→ Telegram API (Kirim Push Alert)
+                                                ▲
+                                                │
+[Tanya Bot Manual di App TG] ──→ Webhook Receiver ──→ Groq API NLP
+                                      │ (Gather ERP Context)
+                                      ▼
+                                Database (Auth & System Prompt Config)
 ```
 
 ---

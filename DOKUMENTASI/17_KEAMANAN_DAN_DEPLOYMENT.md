@@ -7,8 +7,11 @@
 - [D. Manajemen Secret Key](#d-manajemen-secret-key)
 - [E. File .env & .gitignore](#e-file-env-dan-gitignore)
 - [F. Proteksi dari Serangan Cyber](#f-proteksi-dari-serangan-cyber)
-- [G. Deployment ke PythonAnywhere](#g-deployment-ke-pythonanywhere)
+- [G. Deployment ke PythonAnywhere / VPS](#g-deployment-ke-pythonanywhere-vps)
 - [H. Checklist Keamanan Deployment](#h-checklist-keamanan-deployment)
+- [I. Proteksi Keamanan Autentikasi Lanjutan (Rate Limit)](#i-proteksi-keamanan-autentikasi-lanjutan-rate-limit)
+- [J. Penanganan Error Produksi (Nginx & Gunicorn 404/500)](#j-penanganan-error-produksi-nginx--gunicorn-404500)
+- [K. Penjelasan Mendalam File Non-Python (Nginx, Gunicorn, Systemd)](#k-penjelasan-mendalam-file-non-python-nginx-gunicorn-systemd)
 
 ---
 
@@ -421,12 +424,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 ---
 
-## G. Deployment ke PythonAnywhere
+## G. Deployment ke PythonAnywhere / VPS
 
 ### Langkah-langkah Deployment Aman:
 
 ```
-1. Upload kode ke PythonAnywhere (via Git)
+1. Upload kode ke server / VPS (via Git)
    $ git clone <repository-url>
 
 2. Buat .env di server (JANGAN commit!)
@@ -511,6 +514,134 @@ $ python manage.py check --deploy
 | HTTP tanpa HTTPS | Data bisa disadap | Aktifkan HTTPS di PythonAnywhere |
 | Password admin lemah | Mudah di-brute force | Ganti ke password kuat (min 12 karakter) |
 | `.env` file ikut ke Git | Semua rahasia bocor | Tambah `.env` ke `.gitignore` |
+
+---
+
+## I. Proteksi Keamanan Autentikasi Lanjutan (Rate Limit)
+
+### Ancaman: Brute-Force & Credential Stuffing
+Penyerang sering menggunakan *bot* komputer untuk secara otomatis mencoba kombinasi milyaran password kepada form Login halaman publik (juga Lupa Password/Registrasi) hingga ada yang jebol. Kalau tidak dilindungi, form kita bisa dipanggil 10,000 kali per detik yang menyebabkan Server ERP *Down* karena CPU overload (*API Exhaustion / Mikro-DDoS*).
+
+### Solusi: `rate_limit_view` Decorator
+Kami merancang sebuah fungsi middleware berbasis memori Cache bawaan untuk menghukum request login beruntun.
+
+**Cara pasang dalam code:**
+```python
+from auth.rate_limit import rate_limit_view
+from django.utils.decorators import method_decorator
+
+@method_decorator(rate_limit_view(max_attempts=5, period=300, redirect_url='login'))
+class CustomLoginView(View):
+    # Logika login disini...
+```
+**Mekanisme:**
+1. Maksimal *5 pencobaan* gagal diperbolehkan dalam kurun waktu `period` *300 Detik (5 menit)*.
+2. Identifikasi dilakukan via *IP Address* dan *Session Key*.
+3. Sesudah 5 kegagalan tercapai, *seluruh HTTP request di block/di-redirect* instan layaknya tameng, mengembalikan Response Error tanpa pernah mengeksekusi pengecekan kredensial database SQL (Menghemat resources DB Server).
+
+---
+
+## J. Penanganan Error Produksi (Nginx & Gunicorn 404/500)
+
+Lingkungan VPS (*Virtual Private Server*) produksi memiliki tantangan saat *Debugging mode* dimatikan (`DEBUG=False`).
+Bawaannya, error system 500 akan menampilkan tulisan kasar *Internal Server Error* berlatar putih dari OS Nginx/Gunicorn.
+
+### Solusi Templating Error Kustom
+1. **Error 404 (Halaman Tidak Ditemukan):** Di-*override* pada config Django untuk menyajikan halaman UI dari file *templates/errors/404.html* dengan UX elegan dan link pengembali yang aman (*back button*).
+2. **Error 500 (Guncangan Logic Server):** Mengubah `urls.py` agar mengelola penangkapan standard handler500, melayaninya dengan format *templates/errors/500.html*. Ini menyamar dari kesan "*website sedang rusak*" pada kacamata klien.
+
+Konfigurasi ini disinkronisasikan wajib saat deployment server berjalan berdampingan (Proxy pass) atas *Gunicorn systemd daemon* & port *Nginx Server Block*.
+
+---
+
+## K. Penjelasan Mendalam File Non-Python (Nginx, Gunicorn, Systemd)
+
+Dalam lingkungan VPS, Python/Django tidak bisa berjalan sendirian untuk melayani puluhan ribu *request*. Kita mengandalkan file non-Python milik Sistem Operasi Linux (Ubuntu/Debian) untuk menjadi fondasinya. Berikut adalah anatomi, fungsi, dan artinya:
+
+### 1. File `gunicorn.socket` (Jembatan Komunikasi)
+**Lokasi server:** `/etc/systemd/system/gunicorn.socket`
+**Fungsi & Artinya:** Membuat sebuah titik akses (socket unix) di dalam RAM sistem operasi untuk mengantri *request* yang datang secara paralel sebelum diproses oleh Gunicorn.
+**Isi Kode:**
+```ini
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+
+[Install]
+WantedBy=sockets.target
+```
+- **Mengapa ada ini?** Mencegah kehilangan *requests*. Jika pengunjung datang saat Gunicorn sedang repot me-restart, paket data akan tertahan di `/run/gunicorn.sock` (tidak menghasilkan error seketika).
+- **Terhubung dengan:** `gunicorn.service` (yang akan membaca sock file ini) dan `Nginx` (yang akan mengirim *traffic* ke sock ini).
+
+### 2. File `gunicorn.service` (Manajer Proses Aplikasi)
+**Lokasi server:** `/etc/systemd/system/gunicorn.service`
+**Fungsi & Artinya:** Mengubah aplikasi Python Django yang rapuh menjadi sebuah *Daemon Service* latar belakang (*Background Process*) yang sangat tangguh. Ini mendikte berapa banyak pekerja (*workers*) Core CPU yang dialokasikan untuk SERPTECH.
+**Isi Kode:**
+```ini
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/home/ubuntu/SERPTECH
+ExecStart=/home/ubuntu/env/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          config.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+```
+- **Fungsi per baris utama:**
+  - `User=ubuntu` & `Group=www-data`: Mengikat perizinan file sehingga Nginx (Grup `www-data`) bisa membaca file hasil *render* Python.
+  - `--workers 3`: Menggunakan rumus *(2 x Core CPU) + 1*. Karena VPS kita punya 1 Core, kita siapkan 3 Worker. Ini artinya SERPTECH bisa memproses 3 transaksi besar secara serentak (Parallel Processing).
+- **Mengapa ada ini?** Tanpa file sistem pengontrol ini, Django akan mati kalau terminal SSH kita tutup. Systemd akan senantiasa membangunkan balik (auto-restart) SERPTECH seandainya server me-reboot/mati lampu.
+
+### 3. File Server Block / Virtual Host `Nginx` (Pintu Gerbang Internet)
+**Lokasi server:** `/etc/nginx/sites-available/serptech`
+**Fungsi & Artinya:** Nginx adalah polisi lalu lintas (Web Server). Fungsi file ini adalah mencegat semua lalu lintas masuk dari Internet (*Port 80/443*), melayani file statis CSS/Gambar/JS secara mandiri (karena Nginx 10x lebih cepat merespon file statis daripada Python), lalu meneruskan sisa perintah dinamis (seperti URL Login/Laporan) ke Gunicorn Socket.
+**Isi Kode Utama:**
+```nginx
+server {
+    listen 80;
+    server_name serptech.cloud www.serptech.cloud;
+
+    # 1. Melayani Proteksi Hacking (Bypass ukuran upload gambar)
+    client_max_body_size 50M;
+
+    # 2. Akses Lacak Error & Pencatatan History Log
+    access_log /var/log/nginx/serptech_access.log;
+    error_log /var/log/nginx/serptech_error.log;
+
+    # 3. STATIC FILES: CSS/JS (Diurus 100% oleh Nginx)
+    location /static/ {
+        alias /home/ubuntu/SERPTECH/staticfiles/;
+        expires 30d;      # Caching browser user 30 Hari
+    }
+
+    # 4. MEDIA FILES: Upload User (Sama, Diurus murni oleh Nginx)
+    location /media/ {
+        alias /home/ubuntu/SERPTECH/media/;
+    }
+
+    # 5. DYNAMIC REQUESTS: Serahkan ke Python/Gunicorn (Proxy Pass)
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+```
+- **Mengapa ada `location /static/` dan `/media/`?**
+Python/Django sangat "*mahal/berat*" (menghabiskan CPU) kalau disuruh hal remeh seperti menyuplai ratusan file CSS dan JPG setiap kali antarmuka Web dimuat. Nginx diciptakan dengan bahasa C, file config ini mengizinkan Nginx melewati Django dan mengambil langsung CSS/JS dari Harddisk ke *client*, memastikan respons sekejap mata (~3ms).
+- **Bagaimana ini terhubung?** Blok `location /` di ujung bawah menangkap semua yang tersisa (Contoh: `serptech.cloud/pos/`) lalu melemparkannya via `proxy_pass` ke file Socket `gunicorn.sock` yang sudah kita bahas sebelumnya.
+
+Dengan tiga serangkai file OS di atas, Arsitektur SERPTECH kita bisa memegang lalu lintas Produksi (*Sangat Robust*) layaknya platform Enterprise sejati.
 
 ---
 
