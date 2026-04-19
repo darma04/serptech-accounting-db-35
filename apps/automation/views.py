@@ -134,7 +134,7 @@ class TemplatePesanListView(ReadPermissionMixin, ListView):
         return context
 
 
-class TemplatePesanUpdateView(UpdatePermissionMixin, UpdateView):
+class TemplatePesanUpdateView(ReadPermissionMixin, UpdateView):
     """View untuk edit template pesan"""
     model = TemplatePesan
     # Template HTML yang digunakan untuk render halaman
@@ -158,6 +158,12 @@ class TemplatePesanUpdateView(UpdatePermissionMixin, UpdateView):
         # Data konteks: variabel_tersedia — untuk ditampilkan di template
         context['variabel_tersedia'] = variabel_map.get(self.object.jenis, [])
         return context
+
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'update', 'automation'):
+            messages.error(request, 'Anda tidak memiliki akses untuk mengubah template ini.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         """Dipanggil saat form valid — proses penyimpanan data."""

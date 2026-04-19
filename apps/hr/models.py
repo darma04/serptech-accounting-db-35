@@ -618,6 +618,10 @@ class Absensi(models.Model):
     lokasi_masuk = models.CharField(max_length=255, blank=True, null=True, verbose_name="Lokasi Masuk")
     lokasi_keluar = models.CharField(max_length=255, blank=True, null=True, verbose_name="Lokasi Keluar")
 
+    # Jarak dari kantor saat absen (dalam meter)
+    jarak_masuk = models.DecimalField(max_digits=10, decimal_places=1, blank=True, null=True, verbose_name="Jarak Masuk (m)")
+    jarak_keluar = models.DecimalField(max_digits=10, decimal_places=1, blank=True, null=True, verbose_name="Jarak Keluar (m)")
+
     catatan = models.TextField(blank=True, null=True, verbose_name="Catatan")
     dibuat_pada = models.DateTimeField(auto_now_add=True)
     diupdate_pada = models.DateTimeField(auto_now=True)

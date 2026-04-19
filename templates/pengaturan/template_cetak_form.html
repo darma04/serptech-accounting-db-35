@@ -181,6 +181,35 @@
         min-height: 80px;
     }
 </style>
+
+{% if can_edit.pengaturan == False %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const alertHtml = `
+            <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+                <i class="ri-information-line ri-22px me-2"></i>
+                <div>
+                    <strong>Mode Cuma-baca:</strong> Anda tidak memiliki izin untuk mengubah data ini.
+                </div>
+            </div>
+        `;
+        const cardBody = document.querySelector('.card-body');
+        if(cardBody){
+            cardBody.insertAdjacentHTML('afterbegin', alertHtml);
+        }
+
+        const inputs = document.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.setAttribute('disabled', 'disabled');
+        });
+
+        const saveButtons = document.querySelectorAll('button[type="submit"]');
+        saveButtons.forEach(btn => {
+            btn.style.display = 'none';
+        });
+    });
+</script>
+{% endif %}
 {% endblock content %}
 
 {% block page_js %}

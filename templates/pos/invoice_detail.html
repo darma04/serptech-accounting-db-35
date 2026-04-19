@@ -276,33 +276,46 @@
 
     function shareInvoice() {
         const url = window.location.href;
-        if (navigator.share) {
-            navigator.share({
-                title: 'Invoice {{ transaction.nomor_transaksi }}',
-                text: 'Invoice transaksi POS',
-                url: url
-            });
-        } else {
-            // Fallback: copy to clipboard
-            navigator.clipboard.writeText(url).then(() => {
-                // Tampilkan notifikasi berhasil salin
-                if (typeof Swal !== 'undefined') {
-                    const Toast = Swal.mixin({
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 2000,
-                        timerProgressBar: true
-                    });
-                    Toast.fire({
-                        icon: 'success',
-                        title: 'Link invoice berhasil disalin!'
-                    });
-                } else {
-                    alert('Link invoice telah disalin ke clipboard!');
-                }
-            });
+        const title = 'Invoice {{ transaction.nomor_transaksi }}';
+        const text = 'Invoice transaksi POS - {{ transaction.nomor_transaksi }}';
+
+        // 1. Android WebView — gunakan SerpApp.shareUrl() bridge
+        if (typeof SerpApp !== 'undefined' && typeof SerpApp.shareUrl === 'function') {
+            SerpApp.shareUrl(url, title, text);
+            return;
         }
+
+        // 2. Web Share API (browser modern / PWA)
+        if (navigator.share) {
+            navigator.share({ title: title, text: text, url: url }).catch(() => {});
+            return;
+        }
+
+        // 3. Fallback: Copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                if (typeof Swal !== 'undefined') {
+                    const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+                    Toast.fire({ icon: 'success', title: 'Link invoice berhasil disalin!' });
+                } else { alert('Link invoice telah disalin ke clipboard!'); }
+            }).catch(() => { _fallbackCopyText(url); });
+        } else {
+            _fallbackCopyText(url);
+        }
+    }
+
+    // Fallback copy untuk browser lama / WebView yang tidak mendukung clipboard API
+    function _fallbackCopyText(text) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (typeof Swal !== 'undefined') {
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+                Toast.fire({ icon: 'success', title: 'Link invoice berhasil disalin!' });
+            } else { alert('Link invoice telah disalin!'); }
+        } catch(e) { alert('Tidak dapat menyalin link. Salin manual: ' + text); }
     }
 </script>
 {% endblock page_js %}

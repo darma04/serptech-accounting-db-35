@@ -1736,6 +1736,8 @@ def absensi_face_clock_in(request):
                         pengaturan.latitude, pengaturan.longitude,
                         pengaturan.radius_lokasi
                     )
+                    # Simpan jarak untuk disimpan ke record absensi
+                    clock_in_distance = distance
 
                     # Jika di luar radius → tolak absensi
                     if not is_valid:
@@ -1805,6 +1807,19 @@ def absensi_face_clock_in(request):
                 from django.core.files.base import ContentFile
                 foto_file = ContentFile(foto_data, name=f'clockin_{karyawan.pk}_{today}.jpg')
 
+            # ===== HITUNG JARAK (jika lokasi tersedia tapi tidak wajib) =====
+            if 'clock_in_distance' not in dir():
+                clock_in_distance = None
+                if user_latitude and user_longitude and pengaturan and pengaturan.latitude and pengaturan.longitude:
+                    try:
+                        _, clock_in_distance, _ = face_utils.validate_location(
+                            user_latitude, user_longitude,
+                            pengaturan.latitude, pengaturan.longitude,
+                            pengaturan.radius_lokasi or 100
+                        )
+                    except Exception:
+                        pass
+
             # ===== BUAT RECORD ABSENSI =====
             # get_or_create: cek duplikasi (1 karyawan = 1 absensi/hari)
             absensi, created = Absensi.objects.get_or_create(
@@ -1814,7 +1829,8 @@ def absensi_face_clock_in(request):
                     'jam_masuk': now,
                     'status': status_absensi,
                     'foto_masuk': foto_file,
-                    'persentase_kemiripan': round(confidence * 100, 1) if confidence else None  # Simpan confidence
+                    'persentase_kemiripan': round(confidence * 100, 1) if confidence else None,  # Simpan confidence
+                    'jarak_masuk': clock_in_distance,  # Simpan jarak dari kantor
                 }
             )
 
@@ -1907,6 +1923,8 @@ def absensi_face_clock_out(request):
                         pengaturan.latitude, pengaturan.longitude,
                         pengaturan.radius_lokasi
                     )
+                    # Simpan jarak untuk disimpan ke record absensi
+                    clock_out_distance = distance
 
                     if not is_valid:
                         return JsonResponse({
@@ -1978,6 +1996,20 @@ def absensi_face_clock_out(request):
                 # Update persentase kemiripan jika belum ada
                 if not absensi.persentase_kemiripan and confidence:
                     absensi.persentase_kemiripan = round(confidence * 100, 1)
+
+                # Simpan jarak clock out
+                if 'clock_out_distance' not in dir():
+                    clock_out_distance = None
+                    if user_latitude and user_longitude and pengaturan and pengaturan.latitude and pengaturan.longitude:
+                        try:
+                            _, clock_out_distance, _ = face_utils.validate_location(
+                                user_latitude, user_longitude,
+                                pengaturan.latitude, pengaturan.longitude,
+                                pengaturan.radius_lokasi or 100
+                            )
+                        except Exception:
+                            pass
+                absensi.jarak_keluar = clock_out_distance
                 absensi.save()
 
                 return JsonResponse({

@@ -102,6 +102,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "apps.activity_log.middleware.ActivityLogMiddleware",
     "apps.core.license_middleware.LicenseMiddleware",
+    "apps.core.maintenance_middleware.MaintenanceMiddleware",
 ]
 
 # ==========================================================================
@@ -259,6 +260,15 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_AGE = 86400  # 24 hours
+SESSION_SAVE_EVERY_REQUEST = True  # Refresh session expiry setiap request (cegah logout mendadak)
+
+# Cookie name unik per aplikasi — WAJIB agar session & CSRF tidak saling tabrakan
+# saat multiple Django app berjalan di localhost (port berbeda)
+SESSION_COOKIE_NAME = "serptech_sessionid"
+CSRF_COOKIE_NAME = "serptech_csrftoken"
+
+# CSRF Failure Handler — Redirect ramah saat token kedaluwarsa (bukan error 403)
+CSRF_FAILURE_VIEW = "auth.csrf_failure.csrf_failure_view"
 
 # ==========================================================================
 #  SECURITY HARDENING — Perlindungan dari Serangan Cyber

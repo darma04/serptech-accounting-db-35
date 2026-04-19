@@ -117,6 +117,26 @@ class SubModulePermissionMixin:
         # Permission diizinkan → lanjutkan ke view asli
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        """Inject RBAC variables into context for global UI gating."""
+        context = {}
+        if hasattr(super(), 'get_context_data'):
+            context = super().get_context_data(**kwargs)
+        
+        context['rbac_current_module'] = self.permission_module
+        context['rbac_current_sub_module'] = self.permission_sub_module
+        
+        user = getattr(self.request, 'user', None)
+        if user and not user.is_superuser:
+            context['rbac_can_read'] = has_permission(user, 'read', self.permission_module, self.permission_sub_module)
+            context['rbac_can_create'] = has_permission(user, 'create', self.permission_module, self.permission_sub_module)
+            context['rbac_can_edit'] = has_permission(user, 'write', self.permission_module, self.permission_sub_module)
+            context['rbac_can_delete'] = has_permission(user, 'delete', self.permission_module, self.permission_sub_module)
+        else:
+            context['rbac_can_read'] = context['rbac_can_create'] = context['rbac_can_edit'] = context['rbac_can_delete'] = True
+            
+        return context
+
     def post(self, request, *args, **kwargs):
         """
         Ensure POST requests explicitly call the delete() method if this is a DeleteView.
@@ -180,6 +200,26 @@ class ModulePermissionMixin:
             return redirect(self.permission_redirect_url)
 
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        """Inject RBAC variables into context for global UI gating."""
+        context = {}
+        if hasattr(super(), 'get_context_data'):
+            context = super().get_context_data(**kwargs)
+        
+        context['rbac_current_module'] = self.permission_module
+        context['rbac_current_sub_module'] = None
+        
+        user = getattr(self.request, 'user', None)
+        if user and not user.is_superuser:
+            context['rbac_can_read'] = has_permission(user, 'read', self.permission_module)
+            context['rbac_can_create'] = has_permission(user, 'create', self.permission_module)
+            context['rbac_can_edit'] = has_permission(user, 'write', self.permission_module)
+            context['rbac_can_delete'] = has_permission(user, 'delete', self.permission_module)
+        else:
+            context['rbac_can_read'] = context['rbac_can_create'] = context['rbac_can_edit'] = context['rbac_can_delete'] = True
+            
+        return context
 
 
 # ==================== MIXIN LEGACY (Backward Compatibility) ====================
@@ -264,6 +304,31 @@ class ReadPermissionMixin:
 
         return super().dispatch(request, *args, **kwargs)
 
+    def get_context_data(self, **kwargs):
+        context = {}
+        if hasattr(super(), 'get_context_data'):
+            context = super().get_context_data(**kwargs)
+        
+        context['rbac_current_module'] = self.permission_module
+        context['rbac_current_sub_module'] = self.permission_sub_module
+        
+        user = getattr(self.request, 'user', None)
+        if user and not user.is_superuser:
+            context['rbac_can_read'] = has_permission(user, 'read', self.permission_module, self.permission_sub_module)
+            context['rbac_can_create'] = has_permission(user, 'create', self.permission_module, self.permission_sub_module)
+            
+            # CEK EDIT UNTUK READ-ONLY MODE
+            can_write = has_permission(user, 'write', self.permission_module, self.permission_sub_module)
+            context['rbac_can_edit'] = can_write
+            context['is_readonly_mode'] = not can_write
+            
+            context['rbac_can_delete'] = has_permission(user, 'delete', self.permission_module, self.permission_sub_module)
+        else:
+            context['is_readonly_mode'] = False
+            context['rbac_can_read'] = context['rbac_can_create'] = context['rbac_can_edit'] = context['rbac_can_delete'] = True
+            
+        return context
+
 
 class CreatePermissionMixin:
     """
@@ -292,7 +357,8 @@ class CreatePermissionMixin:
 class UpdatePermissionMixin:
     """
     Mixin untuk cek permission EDIT (can_edit) dengan support sub-modul.
-    Raise PermissionDenied (403) jika user tidak punya akses edit.
+    Jika user hanya punya akses baca, maka izinkan GET (read-only mode),
+    tetapi tolak POST (simpan).
     """
     permission_module = None
     permission_sub_module = None
@@ -305,12 +371,39 @@ class UpdatePermissionMixin:
         if not self.permission_module:
             raise ValueError(f"{self.__class__.__name__} must define 'permission_module'")
 
-        # Cek permission EDIT (action='write' = alias untuk 'update')
-        if not has_permission(request.user, 'write', self.permission_module, self.permission_sub_module):
+        # Izinkan untuk MELIHAT halaman jika punya akses BACA
+        if not has_permission(request.user, 'read', self.permission_module, self.permission_sub_module):
             module_name = self.permission_sub_module or self.permission_module
-            raise PermissionDenied(f'Anda tidak memiliki akses untuk mengubah data di {module_name.title()}')
+            raise PermissionDenied(f'Anda tidak memiliki akses untuk melihat form {module_name.title()}')
 
         return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        """Inject is_readonly_mode ke context agar UI form bisa terkunci otomatis."""
+        context = {}
+        if hasattr(super(), 'get_context_data'):
+            context = super().get_context_data(**kwargs)
+        
+        # Inject is_readonly_mode = True jika user tidak punya izin edit
+        if getattr(self.request, 'user', None) and self.request.user.is_superuser:
+            context['is_readonly_mode'] = False
+        else:
+            context['is_readonly_mode'] = not has_permission(self.request.user, 'write', self.permission_module, self.permission_sub_module)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Validasi akses saat mencoba menyimpan data (POST)."""
+        if not request.user.is_superuser:
+            if not has_permission(request.user, 'write', self.permission_module, self.permission_sub_module):
+                messages.error(request, 'Anda tidak memiliki akses untuk mengubah data ini. Mode Cuma-baca aktif.')
+                # Fallback redirect ke current URL / success_url / referer
+                if hasattr(self, 'success_url') and self.success_url:
+                    return redirect(self.success_url)
+                return redirect(request.META.get('HTTP_REFERER', 'dashboard:index'))
+        if hasattr(super(), 'post'):
+            return super().post(request, *args, **kwargs)
+        from django.http import HttpResponseNotAllowed
+        return HttpResponseNotAllowed(['GET', 'POST'])
 
 
 class DeletePermissionMixin:

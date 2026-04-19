@@ -136,6 +136,7 @@ class RolePermission(models.Model):
             ('perusahaan', 'Pengaturan Perusahaan'),         # Setting perusahaan
             ('metode_pembayaran', 'Metode Pembayaran'),      # CRUD metode pembayaran
             ('template_cetak', 'Template Cetak'),             # Template cetak dokumen
+            ('manajemen_data', 'Manajemen Data'),            # Manajemen hapus data dll
         ],
         'ai_assistant': [
             ('dashboard_ai', 'AI Dashboard'),                # Dashboard analitik AI
@@ -206,6 +207,7 @@ class RolePermission(models.Model):
         'perusahaan': 'perusahaan',
         'metode_pembayaran': 'metode-pembayaran',
         'template_cetak': 'template-cetak',
+        'manajemen_data': 'manajemen-data',
         # === AI Manajemen ===
         'dashboard_ai': 'dashboard',             # sidebar: ai-dashboard → extract → 'dashboard'
         'pengaturan_ai': 'assistant-settings',   # sidebar: ai-assistant-settings → extract → 'assistant-settings'

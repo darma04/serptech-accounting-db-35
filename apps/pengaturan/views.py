@@ -103,7 +103,10 @@ class ProfilView(ReadPermissionMixin, TemplateView):
 
 
     def post(self, request, *args, **kwargs):
-
+        # Proteksi: POST hanya boleh jika punya hak update
+        if not has_permission(request.user, 'update', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk mengubah profil ini.')
+            return redirect('pengaturan:profil')
 
         user = request.user
 
@@ -133,7 +136,7 @@ class ProfilView(ReadPermissionMixin, TemplateView):
         return redirect('pengaturan:profil')
 
 
-class PerusahaanView(UpdatePermissionMixin, UpdateView):
+class PerusahaanView(ReadPermissionMixin, UpdateView):
     """
     Pengaturan Perusahaan - data perusahaan, sistem, SMTP email (singleton).
     URL: /pengaturan/perusahaan/
@@ -147,6 +150,8 @@ class PerusahaanView(UpdatePermissionMixin, UpdateView):
         'nama_perusahaan', 'logo', 'alamat', 'telepon', 'email', 'website', 'pajak_default',
         # System Settings
         'system_title', 'system_description', 'system_keywords', 'system_logo', 'system_favicon',
+        'auth_image', 'auth_background_image',
+        'misc_image', 'misc_background_image',
         'maintenance_mode', 'maintenance_message',
         # Email/SMTP
         'email_smtp_host', 'email_smtp_port', 'email_smtp_user', 'email_smtp_password', 'email_use_tls',
@@ -166,6 +171,12 @@ class PerusahaanView(UpdatePermissionMixin, UpdateView):
         context = TemplateLayout.init(self, super().get_context_data(**kwargs))
         return context
 
+
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'update', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk mengubah pengaturan ini.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         """
@@ -221,7 +232,7 @@ class MetodePembayaranListView(ReadPermissionMixin, ListView):
         return context
 
 
-class MetodePembayaranCreateView(CreatePermissionMixin, CreateView):
+class MetodePembayaranCreateView(ReadPermissionMixin, CreateView):
     """Tambah metode pembayaran baru."""
     model = MetodePembayaran
     template_name = 'pengaturan/metode_pembayaran_form.html'
@@ -236,13 +247,19 @@ class MetodePembayaranCreateView(CreatePermissionMixin, CreateView):
         return context
 
 
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'create', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk menambah metode pembayaran.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
 
         messages.success(self.request, 'Metode pembayaran berhasil ditambahkan!')
         return super().form_valid(form)
 
 
-class MetodePembayaranUpdateView(UpdatePermissionMixin, UpdateView):
+class MetodePembayaranUpdateView(ReadPermissionMixin, UpdateView):
     """Edit metode pembayaran yang sudah ada."""
     model = MetodePembayaran
     template_name = 'pengaturan/metode_pembayaran_form.html'
@@ -256,6 +273,12 @@ class MetodePembayaranUpdateView(UpdatePermissionMixin, UpdateView):
         context['action'] = 'Edit'
         return context
 
+
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'update', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk mengubah metode pembayaran.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
 
@@ -396,7 +419,7 @@ class TemplateCetakListView(ReadPermissionMixin, ListView):
 
 
 
-class TemplateCetakUpdateView(UpdatePermissionMixin, UpdateView):
+class TemplateCetakUpdateView(ReadPermissionMixin, UpdateView):
     """Edit template cetak - konfigurasi header, footer, tanda tangan."""
     model = TemplateCetak
     template_name = 'pengaturan/template_cetak_form.html'
@@ -417,6 +440,12 @@ class TemplateCetakUpdateView(UpdatePermissionMixin, UpdateView):
         return context
 
 
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'update', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk mengubah pengaturan ini.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
+
     def form_valid(self, form):
 
         messages.success(self.request, 'Template cetak berhasil diperbarui!')
@@ -424,7 +453,7 @@ class TemplateCetakUpdateView(UpdatePermissionMixin, UpdateView):
 
 
 
-class TemplateCetakCreateView(CreatePermissionMixin, CreateView):
+class TemplateCetakCreateView(ReadPermissionMixin, CreateView):
     """Buat template cetak baru untuk jenis dokumen tertentu."""
     model = TemplateCetak
     template_name = 'pengaturan/template_cetak_form.html'
@@ -444,6 +473,12 @@ class TemplateCetakCreateView(CreatePermissionMixin, CreateView):
         context['action'] = 'Tambah'
         return context
 
+
+    def post(self, request, *args, **kwargs):
+        if not has_permission(request.user, 'create', 'pengaturan'):
+            messages.error(request, 'Anda tidak memiliki akses untuk menambah pengaturan ini.')
+            return redirect(self.success_url)
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
 

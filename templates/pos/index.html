@@ -952,6 +952,23 @@
         color: rgba(105,108,255,0.85);
         border-color: rgba(105,108,255,0.4);
     }
+    /* ==========================================
+     * SWAL POPUP — Action Icons (Transaksi Berhasil)
+     * ========================================== */
+    .swal-action-icon {
+        transition: transform 0.2s ease, opacity 0.2s ease;
+        cursor: pointer;
+    }
+    .swal-action-icon:hover {
+        transform: translateY(-2px);
+        opacity: 0.85;
+    }
+    .swal-action-icon:hover .rounded-circle {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .swal-action-icon:active {
+        transform: translateY(0);
+    }
 </style>
 {% endblock page_css %}
 
@@ -2077,11 +2094,57 @@
                     Swal.fire({
                         icon: 'success',
                         title: 'Transaksi Berhasil!',
-                        html: `Nomor: <strong>${data.nomor_transaksi}</strong>`,
-                        confirmButtonColor: '#696cff',
-                        confirmButtonText: 'Lihat Invoice'
-                    }).then(() => {
-                        window.location.href = data.redirect_url;
+                        html: `
+                            <p class="mb-3">Nomor: <strong>${data.nomor_transaksi}</strong></p>
+                            <div class="d-flex justify-content-center gap-4 mt-3 mb-3">
+                                <a href="/pos/invoice/${data.transaction_id}/print/" target="_blank"
+                                   class="text-center text-decoration-none swal-action-icon" title="Cetak Invoice">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1"
+                                         style="width:44px;height:44px;background:rgba(105,108,255,0.1);">
+                                        <i class="ri-printer-line" style="font-size:1.25rem;color:#696cff;"></i>
+                                    </div>
+                                    <small class="text-muted" style="font-size:0.7rem;">Cetak</small>
+                                </a>
+                                <a href="/pos/invoice/${data.transaction_id}/print/?format=thermal&paper=80" target="_blank"
+                                   class="text-center text-decoration-none swal-action-icon" title="Cetak Struk Thermal">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1"
+                                         style="width:44px;height:44px;background:rgba(255,171,0,0.1);">
+                                        <i class="ri-receipt-line" style="font-size:1.25rem;color:#ffab00;"></i>
+                                    </div>
+                                    <small class="text-muted" style="font-size:0.7rem;">Struk</small>
+                                </a>
+                                <a href="/pos/invoice/${data.transaction_id}/print/" target="_blank"
+                                   class="text-center text-decoration-none swal-action-icon" title="Print PDF">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1"
+                                         style="width:44px;height:44px;background:rgba(113,221,55,0.1);">
+                                        <i class="ri-file-pdf-2-line" style="font-size:1.25rem;color:#71dd37;"></i>
+                                    </div>
+                                    <small class="text-muted" style="font-size:0.7rem;">PDF</small>
+                                </a>
+                                <a href="javascript:void(0)" onclick="posShareInvoice('${data.nomor_transaksi}', ${data.transaction_id})"
+                                   class="text-center text-decoration-none swal-action-icon" title="Bagikan">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-1"
+                                         style="width:44px;height:44px;background:rgba(3,195,236,0.1);">
+                                        <i class="ri-share-forward-line" style="font-size:1.25rem;color:#03c3ec;"></i>
+                                    </div>
+                                    <small class="text-muted" style="font-size:0.7rem;">Bagikan</small>
+                                </a>
+                            </div>
+                            <div class="d-flex justify-content-center gap-2 mt-2">
+                                <button class="btn btn-primary btn-sm" onclick="window.location.href='${data.redirect_url}'">
+                                    <i class="ri-eye-line me-1"></i>Lihat Invoice
+                                </button>
+                                <button class="btn btn-outline-success btn-sm" onclick="posNewTransaction()">
+                                    <i class="ri-add-line me-1"></i>Transaksi Baru
+                                </button>
+                            </div>
+                        `,
+                        showConfirmButton: false,
+                        showCancelButton: false,
+                        showDenyButton: false,
+                        showCloseButton: true,
+                        allowOutsideClick: false,
+                        width: '420px'
                     });
                 } else {
                     Swal.fire({
@@ -2101,6 +2164,58 @@
                 });
                 console.error('Error:', error);
             });
+    }
+
+    // Fungsi Bagikan Invoice dari popup transaksi berhasil
+    // Mendukung: Android WebView (SerpApp bridge), Web Share API, dan Clipboard fallback
+    function posShareInvoice(nomorTransaksi, transactionId) {
+        const url = window.location.origin + '/pos/invoice/' + transactionId + '/';
+        const title = 'Invoice ' + nomorTransaksi;
+        const text = 'Invoice transaksi POS - ' + nomorTransaksi;
+
+        // 1. Android WebView — gunakan SerpApp.shareUrl() bridge
+        if (typeof SerpApp !== 'undefined' && typeof SerpApp.shareUrl === 'function') {
+            SerpApp.shareUrl(url, title, text);
+            return;
+        }
+
+        // 2. Web Share API (browser modern / PWA)
+        if (navigator.share) {
+            navigator.share({ title: title, text: text, url: url }).catch(() => {});
+            return;
+        }
+
+        // 3. Fallback: Copy to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+                Toast.fire({ icon: 'success', title: 'Link invoice berhasil disalin!' });
+            }).catch(() => { _fallbackCopyText(url); });
+        } else {
+            _fallbackCopyText(url);
+        }
+    }
+
+    // Fallback copy untuk browser lama / WebView yang tidak mendukung clipboard API
+    function _fallbackCopyText(text) {
+        try {
+            const ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (typeof Swal !== 'undefined') {
+                const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 2000, timerProgressBar: true });
+                Toast.fire({ icon: 'success', title: 'Link invoice berhasil disalin!' });
+            } else { alert('Link invoice telah disalin!'); }
+        } catch(e) { alert('Tidak dapat menyalin link. Salin manual: ' + text); }
+    }
+
+    // Fungsi Transaksi Baru — reset keranjang dan tutup popup
+    function posNewTransaction() {
+        Swal.close();
+        cart = [];
+        renderCart();
+        updateContinueBar();
     }
 
     // Fungsi untuk menyimpan Draft transaksi

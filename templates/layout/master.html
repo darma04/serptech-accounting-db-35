@@ -682,11 +682,91 @@
     })();
     </script>
 
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         SMART AUTO-DISABLER (RBAC SYSTEM-WIDE GATING)
+         Menyembunyikan aksi Delete, Edit, Create jika permission false via CSS.
+         Mengunci input formulir jika is_readonly_mode aktif via JS.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    {% if rbac_current_module %}
+    <style>
+        {% if rbac_can_delete == False %}
+        /* Hiden aksi delete secara global */
+        .btn-delete, [data-action="delete"], [data-bs-target*="delete"], [data-bs-target*="Delete"], form[action*="delete"] button[type="submit"], a[href*="delete"], a[href*="hapus"] { display: none !important; }
+        {% endif %}
+        {% if rbac_can_create == False %}
+        /* Hiden aksi create secara global */
+        .btn-create, [data-action="create"], a[href*="tambah"], a[href*="create"] { display: none !important; }
+        {% endif %}
+        {% if rbac_can_edit == False %}
+        /* Hiden aksi edit di list dan detail secara global */
+        .btn-edit, [data-action="edit"], [data-bs-target*="edit"], [data-bs-target*="Edit"], a[href*="edit"], a[href*="ubah"], a[href*="update"], a[href*="perbarui"] { display: none !important; }
+        {% endif %}
+    </style>
+    {% endif %}
+
+    {% if is_readonly_mode or rbac_can_edit == False %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log('[RBAC] Mode Cuma-Baca aktif. Mengunci formulir secara global...');
+            const inputs = document.querySelectorAll('.card-body input:not([type="hidden"]), .card-body select, .card-body textarea');
+            inputs.forEach(input => input.setAttribute('disabled', 'disabled'));
+            
+            const submitBtns = document.querySelectorAll('.card-body button[type="submit"], .card-body input[type="submit"]');
+            submitBtns.forEach(btn => btn.style.display = 'none');
+
+            const forms = document.querySelectorAll('.card-body form');
+            forms.forEach(form => {
+                const method = form.getAttribute('method');
+                if (method && method.toLowerCase() === 'post') {
+                    if (!form.querySelector('.readonly-alert')) {
+                        const alertHtml = `
+                        <div class="alert alert-warning d-flex align-items-center mb-4 readonly-alert" role="alert">
+                            <i class="ri-information-line ri-22px me-2"></i>
+                            <div><strong>Mode Cuma-baca:</strong> Anda tidak memiliki izin edit. Formulir dikunci dengan aman.</div>
+                        </div>`;
+                        form.insertAdjacentHTML('afterbegin', alertHtml);
+                    }
+                }
+            });
+        });
+    </script>
+    {% endif %}
+
     {% if user.is_authenticated %}
     {% load ai_tags %}
     {% get_ai_name as ai_display_name %}
     {% include "partials/ai_chat_widget.html" with ai_name=ai_display_name %}
     {% endif %}
+
+    <!-- ═══════════════════════════════════════════════════════════════════════
+         REALTIME MAINTENANCE STATUS CHECKER (JS POLLING)
+         Mengecek status perbaikan dari back-end terus menerus di background.
+         Ini diperlukan agar aplikasi ter-redirect otomatis ketika
+         Admin mengaktifkan Maintenance Mode tanpa user harus me-reload webview.
+         ═══════════════════════════════════════════════════════════════════════ -->
+    <script>
+    (function() {
+        var isKicking = false;
+        // Jangan polling di halaman maintenance/login/license (mereka punya polling sendiri)
+        var skipPaths = ['/pages/misc/under_maintenance/', '/login/', '/license/'];
+        var currentPath = window.location.pathname;
+        for (var i = 0; i < skipPaths.length; i++) {
+            if (currentPath.indexOf(skipPaths[i]) === 0) return;
+        }
+        setInterval(function() {
+            if (isKicking) return;
+            fetch('/license/ping/')
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data && data.is_maintenance_mode === true) {
+                        isKicking = true;
+                        window.location.href = '/pages/misc/under_maintenance/';
+                    }
+                })
+                .catch(function(err) { /* ignore silently */ });
+        }, 15000); // Poll setiap 15 detik
+    })();
+    </script>
 
   </body>
 

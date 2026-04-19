@@ -76,6 +76,23 @@ class PengaturanPerusahaan(models.Model):
         verbose_name="Favicon",
         help_text="Icon yang tampil di tab browser (.ico atau .png 32x32)"
     )
+    
+    # Auth Pages Configuration (Kiri = Ilustrasi, Kanan/Full = Background Mask)
+    auth_image = models.ImageField(
+        upload_to='system/auth/',
+        blank=True,
+        null=True,
+        verbose_name="Gambar Ilustrasi Autentikasi (Kiri)",
+        help_text="Gambar utama pada halaman Login/Register (rekomendasi: PNG transparan)"
+    )
+    auth_background_image = models.ImageField(
+        upload_to='system/auth/',
+        blank=True,
+        null=True,
+        verbose_name="Background Mask Autentikasi",
+        help_text="Gambar shape abstract atau background (rekomendasi: SVG atau PNG transparan)"
+    )
+
     # maintenance_mode — Boolean (True/False)
     maintenance_mode = models.BooleanField(
         default=False, 
@@ -87,6 +104,22 @@ class PengaturanPerusahaan(models.Model):
         default='Sistem sedang dalam maintenance. Silakan coba lagi nanti.',
         blank=True,
         verbose_name="Pesan Maintenance"
+    )
+    
+    # Misc/Error Pages Configuration
+    misc_image = models.ImageField(
+        upload_to='system/misc/',
+        blank=True,
+        null=True,
+        verbose_name="Gambar Ilustrasi Halaman Error & Maintenance",
+        help_text="Gambar utama pada halaman Error & Maintenance (rekomendasi: PNG transparan)"
+    )
+    misc_background_image = models.ImageField(
+        upload_to='system/misc/',
+        blank=True,
+        null=True,
+        verbose_name="Background Halaman Error & Maintenance",
+        help_text="Gambar latar belakang untuk halaman rupa-rupa (rekomendasi: SVG atau PNG transparan)"
     )
     
     # Email/SMTP Settings for sending emails (forgot password, register verification)

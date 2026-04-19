@@ -273,6 +273,10 @@ class RoleCreateAjaxView(SuperuserRequiredMixin, View):
                 
                 created_count = len(new_permissions)
             
+            # Hapus cache permission agar role baru langsung dikenali (real-time, 0 detik delay)
+            from django.core.cache import cache
+            cache.delete(f'role_perms_{role_name}')
+            
             return JsonResponse({
                 'success': True,
                 'message': f'Role {role_name} berhasil ditambahkan dengan {created_count} permissions!'
@@ -411,14 +415,12 @@ class RoleUpdateAjaxView(SuperuserRequiredMixin, View):
                 
                 created_count = len(new_permissions)
             
-            # Invalidasi cache setelah transaction selesai
-            from apps.core.cache_utils import invalidate_role_permissions_cache
+            # Hapus cache permission secara langsung (real-time, 0 detik delay)
+            from django.core.cache import cache
             
             if role_renamed:
-                invalidate_role_permissions_cache(old_role_name)
-                invalidate_role_permissions_cache(target_role)
-            else:
-                invalidate_role_permissions_cache(target_role)
+                cache.delete(f'role_perms_{old_role_name}')
+            cache.delete(f'role_perms_{target_role}')
             
             role_display = dict(RolePermission.get_all_roles()).get(target_role, target_role)
             message += f'Permissions untuk {role_display} berhasil diupdate! ({created_count} permissions)'

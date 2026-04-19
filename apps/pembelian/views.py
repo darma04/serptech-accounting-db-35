@@ -538,6 +538,8 @@ class PurchaseOrderDeleteView(DeletePermissionMixin, DeleteView):
         
         # Seluruh proses rollback + hapus dalam atomic transaction
         try:
+            # 1. Kumpulkan produk orphan SEBELUM hapus PO
+            orphan_products = []
             for item in po.items.all():
                 # Rollback stok (dengan lock untuk mencegah race condition)
                 try:
@@ -551,14 +553,20 @@ class PurchaseOrderDeleteView(DeletePermissionMixin, DeleteView):
                 except Stok.DoesNotExist:
                     pass
                     
-                # Hapus produk orphan (hanya ada di PO ini, tidak ada di modul lain)
+                # Tandai produk orphan (hanya ada di PO ini, tidak ada di modul lain)
                 if item.produk.purchaseorderitem_set.count() == 1:
                     if not item.produk.salesorderitem_set.exists() and \
-                       not item.produk.positem_set.exists() and \
+                       not item.produk.postransactionitem_set.exists() and \
                        not item.produk.transferstokitem_set.exists():
-                        item.produk.delete()
+                        orphan_products.append(item.produk.pk)
                 
-            po.delete()  # Items CASCADE otomatis
+            # 2. Hapus PO dulu (items CASCADE otomatis → FK ke produk terlepas)
+            po.delete()
+            
+            # 3. Hapus produk orphan SETELAH PO & items sudah dihapus
+            from apps.produk.models import Produk
+            if orphan_products:
+                Produk.objects.filter(pk__in=orphan_products).delete()
             
             return JsonResponse({'success': True, 'message': 'Purchase Order berhasil dihapus'})
         except ProtectedError:

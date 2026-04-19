@@ -1185,6 +1185,7 @@
               </td>
               <td><span class="badge rounded-pill bg-label-{{ user.status_class }}">{{ user.status }}</span></td>
               <td>
+                {% if can_edit.user_management or can_delete.user_management %}
                 <div class="dropdown">
                   <button class="btn btn-sm btn-icon btn-text-secondary" data-bs-toggle="dropdown">
                     <i class="ri-more-2-line"></i>
@@ -1192,16 +1193,25 @@
                   <div class="dropdown-menu dropdown-menu-end">
                     <a class="dropdown-item" href="{% url 'user_management:user_detail' user.id %}"><i
                         class="ri-eye-line me-2"></i>Detail User</a>
+                    {% if can_edit.user_management %}
                     <a class="dropdown-item" href="{% url 'user_management:user_edit' user.id %}"><i
                         class="ri-edit-line me-2"></i>Edit User</a>
                     <a class="dropdown-item" href="#" onclick="toggleUserStatus({{ user.id }})"><i
                         class="ri-toggle-line me-2"></i>Toggle Status</a>
+                    {% endif %}
+                    {% if can_delete.user_management %}
                     <div class="dropdown-divider"></div>
                     <a class="dropdown-item text-danger" href="#"
                       onclick="confirmDeleteUser({{ user.id }}, '{{ user.username }}'); return false;"><i
                         class="ri-delete-bin-line me-2"></i>Hapus User</a>
+                    {% endif %}
                   </div>
                 </div>
+                {% else %}
+                <span class="badge bg-label-secondary">
+                    <i class="ri-eye-line me-1"></i>View Only
+                </span>
+                {% endif %}
               </td>
             </tr>
             {% empty %}
