@@ -25,6 +25,7 @@ from django.db import models                    # Django ORM untuk definisi mode
 from django.contrib.auth.models import User      # Model User bawaan Django
 from django.db.models.signals import post_save   # Signal yang terpicu SETELAH model disimpan
 from django.dispatch import receiver             # Decorator untuk menghubungkan signal ke fungsi
+from apps.core.validators import validate_image_file
 
 
 class Profile(models.Model):
@@ -105,7 +106,7 @@ class Profile(models.Model):
 
     # ==================== FIELD PROFIL ====================
     # Foto profil user — disimpan di folder media/avatars/
-    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="Foto Profil")
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, verbose_name="Foto Profil", validators=[validate_image_file])
 
     # Nomor telepon user (opsional)
     phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Nomor Telepon")
@@ -186,7 +187,7 @@ class Profile(models.Model):
         - DRY (Don't Repeat Yourself)
         """
         if created:
-            Profile.objects.create(user=instance, email=instance.email)
+            Profile.objects.get_or_create(user=instance, defaults={'email': instance.email})
 
     # ==================== META ====================
     class Meta:

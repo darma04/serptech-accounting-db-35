@@ -37,6 +37,7 @@ from django.conf.urls.static import static
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from apps.core.cache_views import refresh_cache_view
 from web_project.views import custom_error_404, custom_error_403, custom_error_400, custom_error_500
 
 
@@ -208,6 +209,7 @@ urlpatterns = [
     
     # Global Search API — endpoint pencarian global untuk semua modul
     path("api/search/", global_search_api, name='global_search'),
+    path("core/cache/refresh/", refresh_cache_view, name='core_refresh_cache'),
     
     # License Activation URLs
     path("", include("apps.core.license_urls")),
@@ -223,6 +225,7 @@ urlpatterns = [
     path("pembelian/", include("apps.pembelian.urls")),
     path("penjualan/", include("apps.penjualan.urls")),
     path("pos/", include("apps.pos.urls")),
+    path("kas-bank/", include("apps.kas_bank.urls")),
     path("biaya/", include("apps.biaya.urls")),
     path("laporan/", include("apps.laporan.urls")),
     path("activity-log/", include("apps.activity_log.urls")),
@@ -232,6 +235,11 @@ urlpatterns = [
     path("automation/", include("apps.automation.urls")),  # Automasi Telegram
     path("ai/", include("apps.ai_assistant.urls")),  # AI Chat Assistant
     path("fraud/", include("apps.fraud_detection.urls")),  # Fraud Detection
+    path("akuntansi/", include("apps.akuntansi.urls")),  # Akuntansi (Core Accounting)
+    path("piutang/", include("apps.piutang.urls")),  # Piutang (Accounts Receivable)
+    path("hutang/", include("apps.hutang.urls")),  # Hutang (Accounts Payable)
+    path("aset/", include("apps.aset.urls")),  # Aset Tetap (Fixed Assets)
+    path("pajak/", include("apps.pajak.urls")),  # Pajak (Tax Engine)
     
     # Original URLs
     path("", include("apps.pages.urls")),

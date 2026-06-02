@@ -35,6 +35,7 @@ from auth.models import Profile                 # Model Profile
 from auth.views import AuthView                 # Base class autentikasi
 from auth.rate_limit import rate_limit_view     # Rate limit decorator
 from datetime import timedelta, datetime        # Modul untuk kalkulasi waktu
+from django.utils import timezone                   # Timezone-aware datetime Django
 import uuid                                    # Modul generate token unik
 
 
@@ -91,7 +92,7 @@ class ForgetPasswordView(AuthView):
 
             # Set waktu kadaluarsa token = 24 jam dari sekarang
             # Setelah 24 jam, link reset password tidak bisa digunakan lagi
-            expiration_time = datetime.now() + timedelta(hours=24)
+            expiration_time = timezone.now() + timedelta(hours=24)
 
             # Simpan token dan waktu kadaluarsa di Profile user
             user_profile, created = Profile.objects.get_or_create(user=user)

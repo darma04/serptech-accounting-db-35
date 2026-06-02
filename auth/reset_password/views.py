@@ -34,6 +34,8 @@ from auth.rate_limit import rate_limit_view         # Rate limit decorator
 from django.contrib.auth import authenticate, login  # Autentikasi Django
 from datetime import datetime                       # Modul waktu
 from django.utils import timezone                   # Timezone-aware datetime Django
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 
 
 class ResetPasswordView(AuthView):
@@ -131,10 +133,18 @@ class ResetPasswordView(AuthView):
                 messages.error(request, "Kata sandi tidak cocok.")
                 return redirect("reset-password", token=token)
 
+            # Validasi kekuatan password
+            user = profile.user
+            try:
+                validate_password(new_password, user=user)
+            except ValidationError as e:
+                for msg in e.messages:
+                    messages.error(request, msg)
+                return redirect("reset-password", token=token)
+
             # ===== UPDATE PASSWORD =====
             # Ambil user dari profile dan set password baru
             # set_password() otomatis meng-hash password
-            user = profile.user
             user.set_password(new_password)
             user.save()
 

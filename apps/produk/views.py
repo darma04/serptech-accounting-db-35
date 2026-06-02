@@ -32,7 +32,7 @@ Koneksi:
 """
 
 # Import dari framework Django
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.db.models import ProtectedError                                    # Fungsi render template
 # Import dari framework Django
 from django.contrib.auth.decorators import login_required              # Decorator login wajib
@@ -57,6 +57,7 @@ from apps.core.mixins import (                                         # Permiss
     UpdatePermissionMixin, DeletePermissionMixin,
     SubModulePermissionMixin
 )
+from apps.core.permissions import permission_required
 import logging  # Modul logging standar Python - pengganti print() untuk production
 from django.db import transaction
 
@@ -264,6 +265,33 @@ class SatuanCreateView(SubModulePermissionMixin, CreateView):
         """Dipanggil saat form valid - proses penyimpanan data."""
         messages.success(self.request, 'Satuan berhasil ditambahkan')
         return super().form_valid(form)
+
+
+class SatuanSeedDefaultView(SubModulePermissionMixin, TemplateView):
+    """Seed satuan dan konversi default. URL: /produk/satuan/seed-default/"""
+    template_name = 'produk/satuan_list.html'
+    permission_module = 'produk'
+    permission_sub_module = 'satuan'
+    permission_action = 'create'
+
+    def get(self, request, *args, **kwargs):
+        return redirect('produk:satuan')
+
+    def post(self, request, *args, **kwargs):
+        try:
+            from io import StringIO
+            from django.core.management import call_command
+
+            output = StringIO()
+            call_command('seed_konversi_satuan', stdout=output)
+            messages.success(
+                request,
+                'Seed satuan default berhasil dijalankan. Satuan dan konversi default sudah dilengkapi.'
+            )
+        except Exception as exc:
+            logger.exception('Gagal menjalankan seed satuan default')
+            messages.error(request, f'Gagal menjalankan seed satuan default: {exc}')
+        return redirect('produk:satuan')
 
 
 class SatuanUpdateView(SubModulePermissionMixin, UpdateView):
@@ -706,7 +734,7 @@ class ProdukImportView(SubModulePermissionMixin, TemplateView):
                 # Skip 'sep=,' directive jika ada (dari Excel)
                 lines = decoded_file.splitlines()
                 if lines and lines[0].strip().startswith('sep='):
-                    decoded_file = '\\n'.join(lines[1:])
+                    decoded_file = '\n'.join(lines[1:])
 
                 # Auto-detect delimiter (koma, titik koma, tab)
                 # Beberapa negara pakai titik koma sebagai pemisah kolom
@@ -867,6 +895,37 @@ class ProdukImportView(SubModulePermissionMixin, TemplateView):
                         error_count += 1
                         continue
 
+                    # Tentukan metode pembayaran dari file import atau default
+                    metode_pembayaran = None
+                    metode_nama = str(row.get('metode_pembayaran', '')).strip() if row.get('metode_pembayaran') else ''
+                    if metode_nama:
+                        from apps.pos.models import MetodePembayaran
+                        metode_pembayaran = MetodePembayaran.objects.filter(
+                            nama__iexact=metode_nama, aktif=True
+                        ).first()
+                    if not metode_pembayaran:
+                        # Fallback: gunakan metode pembayaran default pertama yang aktif
+                        from apps.pos.models import MetodePembayaran
+                        metode_pembayaran = MetodePembayaran.objects.filter(aktif=True).first()
+
+                    # Ambil gudang target dari file import (by nama/kode) atau default
+                    gudang_nama = str(row.get('gudang', '')).strip() if row.get('gudang') else ''
+                    gudang_target = None
+                    if gudang_nama:
+                        gudang_target = Gudang.objects.filter(nama__iexact=gudang_nama, aktif=True).first()
+                        if not gudang_target:
+                            gudang_target = Gudang.objects.filter(kode__iexact=gudang_nama, aktif=True).first()
+                    if not gudang_target:
+                        gudang_target = Gudang.objects.filter(aktif=True).first()
+                    if not gudang_target:
+                        gudang_target = Gudang.objects.create(
+                            kode='GD-DEFAULT', nama='Gudang Utama', aktif=True
+                        )
+
+                    # Tentukan status kena_ppn dari file import
+                    kena_ppn_raw = str(row.get('kena_ppn', '')).strip().lower()
+                    kena_ppn = kena_ppn_raw not in ('0', 'false', 'tidak', 'no')
+
                     # Buat produk baru
                     produk = Produk.objects.create(
                         sku=sku or '',
@@ -878,33 +937,23 @@ class ProdukImportView(SubModulePermissionMixin, TemplateView):
                         harga_jual=float(row.get('harga_jual', 0) or 0),
                         barcode=str(row.get('barcode', '')).strip() if row.get('barcode') else '',
                         aktif=True,
-                        dibuat_oleh=request.user
+                        kena_ppn=kena_ppn,
+                        cabang=gudang_target,
+                        dibuat_oleh=request.user,
+                        metode_pembayaran=metode_pembayaran
                     )
 
-                    # Tangani stok jika ada di file import
+                    # Tangani stok — masuk ke gudang_target (stok per-cabang)
                     stok_value = row.get('stok', None)
                     if stok_value is not None and str(stok_value).strip():
-                        # Blok penanganan error - coba jalankan kode di bawah
                         try:
                             stok_jumlah = float(str(stok_value).strip())
                             if stok_jumlah > 0:
-                                # Import dari modul internal proyek
-                                from apps.inventory.models import Gudang, Stok
-                                # Query database - ambil data gudang yang sesuai filter
-                                gudang = Gudang.objects.filter(aktif=True).first()
-                                if not gudang:
-                                    # Buat record baru di database
-                                    gudang = Gudang.objects.create(
-                                        kode='GD-DEFAULT',
-                                        nama='Gudang Utama',
-                                        aktif=True
-                                    )
                                 Stok.objects.update_or_create(
                                     produk=produk,
-                                    gudang=gudang,
+                                    gudang=gudang_target,
                                     defaults={'jumlah': stok_jumlah}
                                 )
-                        # Tangkap error (ValueError, TypeError) - lanjutkan tanpa crash
                         except (ValueError, TypeError):
                             pass  # Abaikan nilai stok yang tidak valid
 
@@ -974,6 +1023,7 @@ class ProdukImportView(SubModulePermissionMixin, TemplateView):
 
 # Wajib login - redirect ke login page jika belum login
 @login_required
+@permission_required('read', 'produk')
 def api_konversi_satuan(request, produk_id):
     """
     API: Ambil daftar satuan yang tersedia untuk produk tertentu.
@@ -1016,6 +1066,7 @@ def api_konversi_satuan(request, produk_id):
 
 
 @login_required
+@permission_required('update', 'produk')
 def update_barcode(request, pk):
     """
     API: Update field barcode produk via AJAX POST.
