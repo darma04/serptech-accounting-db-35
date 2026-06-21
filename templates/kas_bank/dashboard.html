@@ -189,7 +189,7 @@
                         Lihat Semua
                     </a>
                 </div>
-                <div class="card-datatable">
+                <div class="card-datatable table-responsive">
                     <table id="accountBalanceTable" class="table table-hover mb-0 dashboard-datatable">
                         <thead>
                             <tr>
@@ -223,7 +223,7 @@
                         Lihat Semua
                     </a>
                 </div>
-                <div class="card-datatable">
+                <div class="card-datatable table-responsive">
                     <table id="recentTransactionTable" class="table table-hover mb-0 dashboard-datatable">
                         <thead>
                             <tr>
@@ -308,8 +308,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof $ !== 'undefined') {
         ['#accountBalanceTable', '#recentTransactionTable'].forEach(function (selector) {
             if ($(selector).length && !$.fn.dataTable.isDataTable(selector)) {
+                {% if account_cards %}
                 $(selector).DataTable({
-            scrollX: true,
                     language: {
                         sEmptyTable: 'Tidak ada data yang tersedia',
                         sProcessing: 'Sedang memproses...',
@@ -331,6 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     order: [],
                     responsive: false
                 });
+                {% endif %}
             }
         });
     }

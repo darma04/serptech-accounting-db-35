@@ -247,8 +247,8 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
                 </button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="datatables-penggajian table table-hover" id="penggajianTable" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="datatables-penggajian table table-hover" id="penggajianTable">
                 <thead>
                     <tr>
                         <th>Periode</th>
@@ -339,9 +339,39 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
                             <i class="ri-money-dollar-circle-line ri-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-0">Belum ada data slip gaji</p>
                         </td>
-                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="3" class="text-start ps-4 py-3">
+                            <div class="d-flex align-items-center">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>RINGKASAN</strong>
+                                    <br><small class="text-muted">{{ total_slip|default:0 }} Slip Gaji</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3 text-center">
+                            <strong class="text-primary">Rp {{ total_gaji_pokok|floatformat:0|default:"0" }}</strong>
+                            <br><small class="text-muted">Total Gaji Pokok</small>
+                        </td>
+                        <td class="py-3 text-center">
+                            <strong class="text-info">Rp {{ total_tunjangan|floatformat:0|default:"0" }}</strong>
+                            <br><small class="text-muted">Total Tunjangan</small>
+                        </td>
+                        <td class="py-3 text-center">
+                            <strong class="text-danger">Rp {{ total_potongan|floatformat:0|default:"0" }}</strong>
+                            <br><small class="text-muted">Total Potongan</small>
+                        </td>
+                        <td class="py-3 text-center">
+                            <strong class="text-success">Rp {{ grand_total|floatformat:0|default:"0" }}</strong>
+                            <br><small class="text-muted">Total Gaji Bersih</small>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -500,7 +530,6 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
     $(document).ready(function () {
         {% if penggajian_list %}
         dataTable = $('#penggajianTable').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data", "sSearch": "Cari:",
                 "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
@@ -511,7 +540,7 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
             lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
             responsive: false,
             columnDefs: [{ orderable: false, targets: [7] }],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         });
         {% endif %}
     });

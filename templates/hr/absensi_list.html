@@ -160,8 +160,8 @@
                 </button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="datatables-absensi table table-hover" id="absensiTable" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="datatables-absensi table table-hover" id="absensiTable">
                 <thead>
                     <tr>
                         <th>Tanggal</th>
@@ -277,9 +277,30 @@
                             <i class="ri-calendar-check-line ri-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-0">Belum ada data absensi</p>
                         </td>
-                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="5" class="text-start ps-4 py-3">
+                            <div class="d-flex align-items-center">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong>RINGKASAN</strong>
+                                    <br><small class="text-muted">Total {{ absensi_list|length }} Data Absensi</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3">
+                            <div class="d-flex flex-wrap gap-1 justify-content-center">
+                                <span class="badge bg-label-success">Hadir: {{ total_hadir|default:0 }}</span>
+                                <span class="badge bg-label-warning">Terlambat: {{ total_terlambat|default:0 }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3"></td>
+                        <td class="py-3"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -348,8 +369,8 @@ $(document).ready(function() {
     flatpickr('#tanggalAkhir', { dateFormat: 'Y-m-d', locale: 'id' });
 
     {% if absensi_list %}
+    {% if karyawan_list %}
     dataTable = $('#absensiTable').DataTable({
-            scrollX: true,
         language: {
             "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data",
             "sZeroRecords": "Tidak ditemukan data yang sesuai", "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
@@ -360,8 +381,9 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
         responsive: false,
         columnDefs: [{ orderable: false, targets: [7] }],
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
     });
+    {% endif %}
     {% endif %}
 });
 

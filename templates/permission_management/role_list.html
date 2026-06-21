@@ -215,8 +215,8 @@
     </div>
 
     <div class="card">
-        <div class="card-datatable">
-            <table class="datatables-users table" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="datatables-users table">
                 <thead>
                     <tr>
                         <th>User</th>
@@ -326,8 +326,8 @@
     
     var usersTable;
     $(function () {
+        {% if roles %}
         usersTable = $('.datatables-users').DataTable({
-            scrollX: true,
             order: [[0, 'asc']],
             pageLength: 25,
             lengthMenu: [[10, 25, 50, 75, 100, -1], ['10', '25', '50', '75', '100', 'Semua']],
@@ -351,8 +351,9 @@
                     previous: '&laquo;'
                 }
             },
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
         });
+        {% endif %}
         
         $('#searchUser').on('keyup', function() {
             usersTable.search(this.value).draw();

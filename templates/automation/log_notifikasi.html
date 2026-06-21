@@ -191,7 +191,7 @@ Tabel: tanggal, tipe, penerima, status, pesan.
                 </button>
             </div>
         </div>
-        <div class="card-datatable">
+        <div class="card-datatable table-responsive">
             <table class="table table-hover" id="logTable">
                 <thead>
                     <tr>
@@ -252,9 +252,44 @@ Tabel: tanggal, tipe, penerima, status, pesan.
                             <i class="ri-inbox-line ri-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-0">Belum ada log notifikasi</p>
                         </td>
-                    <td></td><td></td><td></td><td></td><td></td></tr>
+                    </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="3" class="text-start ps-4 py-3" style="vertical-align: middle;">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div class="text-start">
+                                    <strong class="d-block" style="font-size: 1rem;">RINGKASAN</strong>
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ total_semua }} total
+                                        notifikasi</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3" style="vertical-align: middle;"></td>
+                        <td class="py-3" style="vertical-align: middle;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-label-success d-flex align-items-center gap-1 mb-1"
+                                    style="font-size: 0.9rem; padding: 0.5rem 0.75rem; min-width: 80px;">
+                                    <i class="ri-check-line"></i>
+                                    <span>{{ total_sukses }}</span>
+                                </span>
+                                <small class="text-muted fw-medium" style="font-size: 0.75rem;">Sukses</small>
+                            </div>
+                        </td>
+                        <td class="py-3" style="vertical-align: middle;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-label-danger d-flex align-items-center gap-1 mb-1"
+                                    style="font-size: 0.9rem; padding: 0.5rem 0.75rem; min-width: 80px;">
+                                    <i class="ri-close-line"></i>
+                                    <span>{{ total_gagal }}</span>
+                                </span>
+                                <small class="text-muted fw-medium" style="font-size: 0.75rem;">Gagal</small>
+                            </div>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -334,7 +369,6 @@ Tabel: tanggal, tipe, penerima, status, pesan.
     $(document).ready(function () {
         {% if logs %}
         table = $('#logTable').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
                 "sProcessing": "Sedang memproses...",
@@ -360,7 +394,7 @@ Tabel: tanggal, tipe, penerima, status, pesan.
             columnDefs: [
                 { orderable: false, targets: [5] }
             ],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function () {
                 $('.dataTables_filter input').attr('placeholder', 'Cari log...');
             }

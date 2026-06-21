@@ -388,7 +388,7 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
+        <div class="card-datatable table-responsive">
             <table class="table table-hover" id="tabelPemasukan">
                 <thead>
                     <tr>
@@ -472,6 +472,31 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                     </tr>
                     {% endif %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="5" class="text-start ps-4 py-3" style="vertical-align: middle;">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div class="text-start">
+                                    <strong class="d-block" style="font-size: 1rem;">RINGKASAN PENDAPATAN BERSIH</strong>
+                                    <small class="text-muted" style="font-size: 0.75rem;">SO: {{ total_sales_order|rupiah }} | POS: {{ total_pos|rupiah }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3" style="vertical-align: middle;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-label-success d-flex align-items-center gap-1 mb-2"
+                                    style="font-size: 0.9rem; padding: 0.5rem 0.75rem; min-width: 140px;">
+                                    <i class="ri-arrow-down-circle-line"></i>
+                                    <span>{{ total_pemasukan|rupiah }}</span>
+                                </span>
+                                <small class="text-muted fw-medium" style="font-size: 0.75rem;">Pendapatan Bersih</small>
+                            </div>
+                        </td>
+                        <td class="py-3"></td>
+                        <td class="py-3"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -486,7 +511,7 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
+        <div class="card-datatable table-responsive">
             <table class="table table-hover" id="tabelPengeluaran">
                 <thead>
                     <tr>
@@ -577,6 +602,31 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                     </tr>
                     {% endif %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="5" class="text-start ps-4 py-3" style="vertical-align: middle;">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div class="text-start">
+                                    <strong class="d-block" style="font-size: 1rem;">RINGKASAN PENGELUARAN</strong>
+                                    <small class="text-muted" style="font-size: 0.75rem;">PO: {{ total_pembelian|rupiah }} | Biaya: {{ total_biaya|rupiah }} | Produk: {{ total_produk_pengeluaran|rupiah }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3" style="vertical-align: middle;">
+                            <div class="d-flex flex-column align-items-center">
+                                <span class="badge bg-label-danger d-flex align-items-center gap-1 mb-2"
+                                    style="font-size: 0.9rem; padding: 0.5rem 0.75rem; min-width: 140px;">
+                                    <i class="ri-arrow-up-circle-line"></i>
+                                    <span>{{ total_pengeluaran|rupiah }}</span>
+                                </span>
+                                <small class="text-muted fw-medium" style="font-size: 0.75rem;">Total
+                                    Pengeluaran</small>
+                            </div>
+                        </td>
+                        <td class="py-3"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -589,8 +639,8 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
     let dtPemasukan, dtPengeluaran;
     $(document).ready(function () {
         if ($('#tabelPemasukan tbody tr').length > 0 && !$('#tabelPemasukan tbody tr td[colspan]').length) {
+            {% if gudang_list %}
             dtPemasukan = $('#tabelPemasukan').DataTable({
-            scrollX: true,
                 language: {
                     "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data", "sSearch": "Cari:",
                     "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
@@ -601,12 +651,13 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                 lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
                 responsive: false,
                 columnDefs: [{ orderable: false, targets: [7] }],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
             });
+            {% endif %}
         }
         if ($('#tabelPengeluaran tbody tr').length > 0 && !$('#tabelPengeluaran tbody tr td[colspan]').length) {
+            {% if gudang_list %}
             dtPengeluaran = $('#tabelPengeluaran').DataTable({
-            scrollX: true,
                 language: {
                     "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data", "sSearch": "Cari:",
                     "sInfo": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
@@ -617,8 +668,9 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                 lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
                 responsive: false,
                 columnDefs: [{ orderable: false, targets: [6] }],
-                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+                dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
             });
+            {% endif %}
         }
     });
 

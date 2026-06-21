@@ -831,7 +831,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (document.getElementById('riwayatTable') && typeof $.fn.DataTable !== 'undefined') {
         $('#riwayatTable').DataTable({
-            scrollX: true,
             responsive: false,
             ordering: true,
             order: [[1, 'desc']],
@@ -852,7 +851,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
         });
     }
 

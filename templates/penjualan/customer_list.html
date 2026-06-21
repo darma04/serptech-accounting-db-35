@@ -138,8 +138,8 @@ Fitur: tambah, edit, hapus customer. Tabel: nama, kontak, alamat, aksi.
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="datatables-customer table table-hover" id="customerTable" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="datatables-customer table table-hover" id="customerTable">
                 <thead>
                     <tr>
                         <th>Kode</th>
@@ -198,9 +198,24 @@ Fitur: tambah, edit, hapus customer. Tabel: nama, kontak, alamat, aksi.
                                 class="ri-user-heart-line ri-3x text-muted mb-3 d-block"></i>
                             <p class="text-muted mb-0">Belum ada customer</p>
                         </td>
-                    <td></td><td></td><td></td><td></td><td></td><td></td></tr>
+                    </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="6" class="text-start ps-4 py-3" style="vertical-align: middle;">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div class="text-start">
+                                    <strong class="d-block" style="font-size: 1rem;">RINGKASAN</strong>
+                                    <small class="text-muted" style="font-size: 0.75rem;">{{ total_customer }} Customer
+                                        Terdaftar</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3"></td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -323,7 +338,6 @@ Fitur: tambah, edit, hapus customer. Tabel: nama, kontak, alamat, aksi.
     $(document).ready(function () {
         {% if customer_list %}
         $('#customerTable').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
                 "sProcessing": "Sedang memproses...",
@@ -348,7 +362,7 @@ Fitur: tambah, edit, hapus customer. Tabel: nama, kontak, alamat, aksi.
                 orderable: false,
                 targets: [6]
             }],
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function () {
                 $('.dataTables_filter input').attr('placeholder', 'Cari customer...');
             }

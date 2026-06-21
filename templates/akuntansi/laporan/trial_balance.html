@@ -216,7 +216,7 @@
                 </button>
             </div>
         </div>
-        <div class="card-datatable">
+        <div class="card-datatable table-responsive">
             <table class="accounting-data-table table table-hover" id="tbTable" data-accounting-primary="true" data-export-title="Neraca Saldo" data-search-placeholder="Cari neraca saldo...">
                 <thead>
                     <tr>
@@ -240,6 +240,25 @@
                     {% endif %}
                     {% endfor %}
                 </tbody>
+                <tfoot class="table-footer-summary">
+                    <tr>
+                        <td colspan="3" class="text-start ps-4 py-3">
+                            <div class="d-flex align-items-center justify-content-start">
+                                <i class="ri-calculator-line me-2 text-primary" style="font-size: 1.5rem;"></i>
+                                <div class="text-start">
+                                    <strong class="d-block" style="font-size: 0.875rem;">RINGKASAN</strong>
+                                    <small class="text-muted">Total debit dan kredit</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-end py-3">
+                            <span class="badge bg-label-primary">{{ total_debit|rupiah }}</span>
+                        </td>
+                        <td class="text-end py-3">
+                            <span class="badge bg-label-success">{{ total_kredit|rupiah }}</span>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         </div>
     </div>
@@ -263,8 +282,8 @@
 <script>
 $(document).ready(function () {
     if (!$.fn.dataTable.isDataTable('#tbTable')) {
+    {% if cabang_list %}
     const table = $('#tbTable').DataTable({
-            scrollX: true,
         language: {
             "sEmptyTable": "Tidak ada data yang tersedia",
             "sProcessing": "Sedang memproses...",
@@ -280,11 +299,12 @@ $(document).ready(function () {
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 75, 100, -1], ['10', '25', '50', '75', '100', 'Semua']],
         responsive: false,
-        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         initComplete: function () {
             $('.dataTables_filter input').attr('placeholder', 'Cari neraca saldo...');
         }
     });
+    {% endif %}
     }
 });
 

@@ -138,8 +138,8 @@
                 <button class="btn btn-sm btn-label-danger" onclick="exportPenyebabPDF()"><i class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="table table-hover datatables-penyebab" id="tabelPenyebab" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="table table-hover datatables-penyebab" id="tabelPenyebab">
                 <thead>
                     <tr>
                         <th>Sumber Jurnal</th>
@@ -172,8 +172,8 @@
                 <button class="btn btn-sm btn-label-danger" onclick="exportDetailPDF()"><i class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="table table-hover datatables-detail" id="tabelDetail" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="table table-hover datatables-detail" id="tabelDetail">
                 <thead>
                     <tr>
                         <th>Tanggal</th>
@@ -224,7 +224,7 @@
                 <button class="btn btn-sm btn-label-danger" onclick="exportTreasuryPDF()"><i class="ri-file-pdf-line me-1"></i>PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
+        <div class="card-datatable table-responsive">
             <table class="table table-hover" id="tabelTreasury">
                 <thead>
                     <tr>
@@ -363,8 +363,8 @@
                 <button class="btn btn-sm btn-label-danger" onclick="exportOrphanJurnalPDF()"><i class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        <div class="card-datatable">
-            <table class="table table-hover datatables-orphan-jurnal" id="tabelOrphanJurnal" style="width:100%">
+        <div class="card-datatable table-responsive">
+            <table class="table table-hover datatables-orphan-jurnal" id="tabelOrphanJurnal">
                 <thead><tr><th>Nomor</th><th>Tanggal</th><th>Deskripsi</th><th>Sumber</th><th>Dibuat Oleh</th></tr></thead>
                 <tbody>
                     {% for j in orphan_jurnal %}
@@ -489,8 +489,8 @@ $(document).ready(function() {
 
     var $tr = $('#tabelTreasury tbody tr:first');
     if ($tr.length && $tr.children('td').length > 1) {
+        {% if cabang_list %}
         $('#tabelTreasury').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia",
                 "sLengthMenu": "Tampilkan _MENU_ data",
@@ -505,14 +505,15 @@ $(document).ready(function() {
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
             responsive: false,
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function() { $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').attr('placeholder', 'Cari akun kas/bank...'); }
         });
+        {% endif %}
     }
 
     if ($('#tabelPenyebab tbody tr:first td').length > 1) {
+        {% if cabang_list %}
         $('#tabelPenyebab').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia",
                 "sLengthMenu": "Tampilkan _MENU_ data",
@@ -527,14 +528,15 @@ $(document).ready(function() {
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
             responsive: false,
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function() { $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').attr('placeholder', 'Cari penyebab...'); }
         });
+        {% endif %}
     }
 
     if ($('#tabelDetail tbody tr:first td').length > 1) {
+        {% if cabang_list %}
         $('#tabelDetail').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia",
                 "sLengthMenu": "Tampilkan _MENU_ data",
@@ -549,14 +551,15 @@ $(document).ready(function() {
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
             responsive: false,
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function() { $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').attr('placeholder', 'Cari jurnal...'); }
         });
+        {% endif %}
     }
 
     if ($('#tabelOrphanJurnal tbody tr:first td').length > 1) {
+        {% if cabang_list %}
         $('#tabelOrphanJurnal').DataTable({
-            scrollX: true,
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia",
                 "sLengthMenu": "Tampilkan _MENU_ data",
@@ -571,9 +574,10 @@ $(document).ready(function() {
             pageLength: 10,
             lengthMenu: [[10, 25, 50, -1], ['10', '25', '50', 'Semua']],
             responsive: false,
-            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+            dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
             initComplete: function() { $(this).closest('.dataTables_wrapper').find('.dataTables_filter input').attr('placeholder', 'Cari jurnal kas tanpa mutasi...'); }
         });
+        {% endif %}
     }
 
     [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(function(el) { return new bootstrap.Tooltip(el); });
