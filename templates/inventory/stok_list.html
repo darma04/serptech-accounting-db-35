@@ -306,6 +306,7 @@ Tabel: produk, gudang, jumlah stok, satuan.
         
         {% if stok_list %}
         if (!$.fn.dataTable.isDataTable('#stokTable')) {
+        {% if gudang_list %}
         const table = $('#stokTable').DataTable({
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
@@ -334,6 +335,7 @@ Tabel: produk, gudang, jumlah stok, satuan.
                 $('.dataTables_filter input').attr('placeholder', 'Cari stok produk...');
             }
         });
+        {% endif %}
         }
         {% endif %}
     });

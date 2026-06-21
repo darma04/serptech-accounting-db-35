@@ -830,6 +830,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
     if (document.getElementById('riwayatTable') && typeof $.fn.DataTable !== 'undefined') {
+        {% if messages %}
         $('#riwayatTable').DataTable({
             responsive: false,
             ordering: true,
@@ -853,6 +854,7 @@ document.addEventListener('DOMContentLoaded', function() {
             lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Semua"]],
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
         });
+        {% endif %}
     }
 
     var konfirmasiInput = document.getElementById('konfirmasi');

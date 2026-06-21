@@ -358,6 +358,7 @@ var templateTable;
 $(document).ready(function() {
     {% if templates %}
     if (!$.fn.dataTable.isDataTable('#templateTable')) {
+    {% if templates %}
     templateTable = $('#templateTable').DataTable({
         responsive: false,
         ordering: true,
@@ -389,6 +390,7 @@ $(document).ready(function() {
             $('.dataTables_filter input').attr('placeholder', 'Cari template...');
         }
     });
+    {% endif %}
     }
     {% endif %}
 });
