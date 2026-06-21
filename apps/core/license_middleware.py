@@ -141,16 +141,31 @@ class LicenseMiddleware:
         return HttpResponseRedirect(reverse('license_activation') + '?error=invalid')
 
     def _is_cls_unreachable(self, config):
-        """Cek apakah CLS reachable dengan ping cepat."""
+        """
+        Cek apakah CLS reachable dengan ping cepat.
+
+        Penting: HTTP error (4xx/5xx) tetap berarti server REACHABLE —
+        server merespons, hanya endpoint-nya yang bermasalah.
+        Hanya network-level errors (timeout, DNS, connection refused)
+        yang dianggap server truly unreachable.
+        """
         cls_url = config.cls_server_url if config.cls_server_url else getattr(
             settings, 'LICENSE_SERVER_URL', 'https://cls.serpgroup.cloud'
         )
         health_url = f"{cls_url.rstrip('/')}/api/v1/license/status/"
         try:
             req = urllib.request.Request(health_url, method='GET')
-            with urllib.request.urlopen(req, timeout=3):
+            with urllib.request.urlopen(req, timeout=5):
                 return False
-        except Exception:
+        except urllib.error.HTTPError:
+            # Server merespons (404, 500, dll) — artinya server REACHABLE
+            logger.info("CLS reachable tapi endpoint health return HTTP error.")
+            return False
+        except urllib.error.URLError as e:
+            logger.warning(f"CLS tidak terjangkau (URLError): {e.reason}")
+            return True
+        except Exception as e:
+            logger.warning(f"CLS tidak terjangkau (unexpected): {e}")
             return True
 
     def _validate_with_cls(self, config, hardware_id, cls_url):
