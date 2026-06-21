@@ -296,6 +296,34 @@
   }
 
   /* ═══════════════════════════════════════════════
+     2c-EXCEPTION. CARD HEADER dengan flex-nowrap
+     ═══════════════════════════════════════════════
+     Card-header yang memiliki class flex-nowrap adalah
+     card dengan grafik (chart) yang memiliki dropdown
+     titik 3 di pojok kanan. Card ini TIDAK boleh wrap
+     karena dropdown harus tetap di pojok kanan di mobile.
+     Override rules di atas agar flex-nowrap berfungsi.
+     ═══════════════════════════════════════════════ */
+
+  /* Specificity 0,4,0 > original 0,3,0 agar menang */
+  .card-header.flex-nowrap.d-flex.justify-content-between {
+    flex-wrap: nowrap !important;
+  }
+  .card-header.flex-nowrap.d-flex.justify-content-between > h5,
+  .card-header.flex-nowrap.d-flex.justify-content-between > h6 {
+    width: auto !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+  .card-header.flex-nowrap.d-flex.justify-content-between > .dropdown {
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+
+  /* ═══════════════════════════════════════════════
      2d. TOMBOL UMUM — Ukuran Mobile Compact
      ═══════════════════════════════════════════════
      Semua tombol: font 13px, tidak wrap text.

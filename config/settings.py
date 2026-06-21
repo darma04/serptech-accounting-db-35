@@ -15,6 +15,7 @@
 ==========================================================================
 """
 import os
+import secrets
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -24,6 +25,17 @@ from dotenv import load_dotenv
 from .template import TEMPLATE_CONFIG, THEME_LAYOUT_DIR, THEME_VARIABLES
 
 load_dotenv()  # take environment variables from .env.
+# Sentry Error Monitoring (Production only)
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN and os.environ.get("DEBUG", "True").lower() not in ["true", "yes", "1"]:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        send_default_pii=True,
+    )
 
 # Bangun path di dalam proyek seperti ini: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,18 +43,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", 'True').lower() in ['true', 'yes', '1']
+DEBUG = os.environ.get("DEBUG", 'False').lower() in ['true', 'yes', '1']
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
-if not SECRET_KEY:
-    if DEBUG:
-        SECRET_KEY = "dev-only-serptech-accounting-v35-change-me"
-    else:
-        raise ImproperlyConfigured("SECRET_KEY wajib di-set saat DEBUG=False.")
-
+SECRET_KEY = os.environ.get("SECRET_KEY", default=secrets.token_urlsafe(50))
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 _default_allowed_hosts = "localhost,0.0.0.0,127.0.0.1" if DEBUG else ""
@@ -59,7 +64,6 @@ CSRF_TRUSTED_ORIGINS = [host.strip() for host in os.environ.get("CSRF_TRUSTED_OR
 
 # Current DJANGO_ENVIRONMENT
 ENVIRONMENT = os.environ.get("DJANGO_ENVIRONMENT", default="local")
-
 
 # Application definition
 
@@ -102,6 +106,31 @@ INSTALLED_APPS = [
     # Original Apps
     "apps.pages",
 ]
+# ==========================================================================
+# MIDDLEWARE - Pipeline Request/Response (URUTAN PENTING!)
+# ==========================================================================
+# Middleware dijalankan dari ATAS ke BAWAH saat request masuk,
+# dan dari BAWAH ke ATAS saat response keluar.
+#
+# Request:  Security → CSP → GZip → ... → View
+# Response: View → ... → GZip → CSP → Security
+#
+# URUTAN WAJIB:
+# 1. SecurityMiddleware    - HARUS PERTAMA (set header keamanan)
+# 2. SessionMiddleware     - Sebelum AuthenticationMiddleware
+# 3. AuthenticationMiddleware - Setelah Session (butuh session data)
+# 4. CsrfViewMiddleware    - Setelah Session (butuh session)
+# 5. CommonMiddleware      - Setelah Locale (butuh bahasa)
+# 6. HTMLCommentStripper   - HARUS TERAKHIR (strip komentar dari response)
+#
+# Middleware custom proyek ini:
+# - CSPMiddleware          → Content Security Policy (cegah XSS)
+# - PreventDoubleSubmit    → Cegah form disubmit 2x (whitelist token)
+# - ActivityLogMiddleware  → Catat aktivitas user ke database
+# - LicenseMiddleware      → Validasi lisensi (Circuit Breaker pattern)
+# - MaintenanceMiddleware  → Blokir akses jika mode maintenance
+# - HTMLCommentStripper    → Hapus komentar developer dari HTML response
+# ==========================================================================
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -121,6 +150,7 @@ MIDDLEWARE = [
     "apps.activity_log.middleware.ActivityLogMiddleware",
     "apps.core.license_middleware.LicenseMiddleware",
     "apps.core.maintenance_middleware.MaintenanceMiddleware",
+    'apps.core.clean_code_middleware.HTMLCommentStripperMiddleware',
 ]
 
 # ==========================================================================
@@ -164,7 +194,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
@@ -205,7 +234,6 @@ elif DEBUG:
 else:
     raise ImproperlyConfigured("DATABASE_ENGINE production harus postgresql atau mysql.")
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -224,7 +252,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
@@ -240,8 +267,9 @@ LANGUAGES = [
 # Atur bahasa default
 # ! Make sure you have cleared the browser cache after changing the default language
 LANGUAGE_CODE = "en"
+FILE_CHARSET = 'utf-8'
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Jakarta"
 
 USE_I18N = True
 
@@ -256,7 +284,6 @@ LOCALE_PATHS = [
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-
 STATICFILES_DIRS = [
     BASE_DIR / "src" / "assets",
     BASE_DIR / "static",
@@ -264,7 +291,6 @@ STATICFILES_DIRS = [
 
 # Default URL on which Django application runs for specific environment
 BASE_URL = os.environ.get("BASE_URL", default="http://127.0.0.1:8000")
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -291,8 +317,8 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 # Login & Logout
 # ------------------------------------------------------------------------------

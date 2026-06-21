@@ -24,6 +24,53 @@
 ==========================================================================
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
+# ==========================================================================
+# PANDUAN DJANGO UNTUK DEVELOPER PEMULA (baca ini sebelum mempelajari views)
+# ==========================================================================
+#
+# APA ITU CLASS-BASED VIEW (CBV)?
+# - CBV = class Python yang menangani HTTP request dan return response
+# - Django menyediakan CBV bawaan: ListView, CreateView, UpdateView, DeleteView
+# - Setiap CBV punya "lifecycle" (siklus hidup) yang bisa di-customize
+#
+# SIKLUS HIDUP CBV (urutan method yang dipanggil):
+# 1. as_view()     → Entry point, dipanggil oleh URL router
+# 2. dispatch()    → Tentukan method (GET/POST) → panggil get() atau post()
+# 3. get()/post()  → Handle request, kumpulkan data
+# 4. get_queryset()→ Ambil data dari database (bisa di-filter/optimasi)
+# 5. get_context_data() → Siapkan data untuk template (variabel {{ }})
+# 6. render()      → Gabungkan template + context → HTML response
+#
+# METHOD PENTING YANG SERING DI-OVERRIDE:
+# - get_queryset()     → Optimasi query (prefetch_related, select_related)
+# - get_context_data() → Tambah variabel ke template (self.context)
+# - form_valid()       → Proses setelah form divalidasi (sebelum save)
+# - get_success_url()  → URL redirect setelah operasi berhasil
+#
+# DECORATOR YANG SERING DIGUNAKAN:
+# @login_required       → User HARUS login, jika tidak → redirect ke /login/
+# @permission_required  → User harus punya permission tertentu (RBAC)
+# @require_http_methods → Batasi method yang diterima (GET, POST, dll)
+# @never_cache          → Response tidak boleh di-cache oleh browser
+#
+# POLA UMUM VIEW DI PROYEK INI:
+# class MyListView(SubModulePermissionMixin, ListView):
+#     module_name = 'nama_modul'          # Untuk pengecekan RBAC
+#     sub_module_name = 'nama_sub_modul'  # Sub-modul yang diakses
+#     model = MyModel                      # Model database yang dipakai
+#     template_name = 'modul/page.html'    # File HTML template
+#
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context = TemplateLayout.init(self, context)  # WAJIB: setup layout
+#         context['data_tambahan'] = ...    # Tambah data custom
+#         return context
+# ==========================================================================
+
+
 # Import dari framework Django
 from django.shortcuts import render
 # Import dari framework Django
@@ -37,17 +84,24 @@ from web_project import TemplateLayout
 from django.db.models import Sum, Count, Q, F, DecimalField, ExpressionWrapper
 # Import dari framework Django
 from django.db.models.functions import Coalesce, TruncDate, TruncMonth
-from apps.core.mixins import TenantScopedResponseCacheMixin
+from apps.core.mixins import ReadPermissionMixin, TenantScopedResponseCacheMixin
 from datetime import datetime, timedelta
 from decimal import Decimal
+from django.utils import timezone
 import logging  # Modul logging standar Python — pengganti print() untuk production
 
+# Import modul akuntansi untuk dashboard accounting
+from apps.akuntansi.models import Akun, JurnalEntry, JurnalLine, PeriodeAkuntansi
+from apps.kas_bank.models import KasBankAccount, KasBankTransaction
+from apps.pajak.models import FakturPajak, SettingPajak
+from apps.hutang.models import Hutang
+from apps.piutang.models import Piutang
+
 # Inisialisasi logger untuk modul Dashboard
-logger = logging.getLogger(__name__)
 
 
 @method_decorator(login_required, name='dispatch')
-class DashboardView(TenantScopedResponseCacheMixin, TemplateView):
+class DashboardView(TenantScopedResponseCacheMixin, ReadPermissionMixin, TemplateView):
     """
     View utama DASHBOARD ERP — mengumpulkan data dari SELURUH modul.
 
@@ -66,6 +120,7 @@ class DashboardView(TenantScopedResponseCacheMixin, TemplateView):
     URL: / (halaman utama setelah login)
     """
     template_name = 'dashboard/index.html'
+    permission_module = 'dashboard'
     cache_timeout = 60
     
     def get_context_data(self, **kwargs):
@@ -1507,5 +1562,255 @@ class DashboardView(TenantScopedResponseCacheMixin, TemplateView):
                 'sales_cabang_labels': [],
                 'sales_cabang_series': [],
             })
+
+        # ==================================================================
+        # DATA AKUNTANSI - Khusus project +Accounting
+        # Menggunakan filter waktu dashboard (filter_start / filter_end)
+        # Jika tidak ada filter, default ke bulan saat ini.
+        # ==================================================================
+        try:
+            today = timezone.now().date()
+            # Gunakan filter dashboard jika ada, fallback ke bulan ini
+            ref_start = filter_start if filter_start else today.replace(day=1)
+            ref_end = filter_end if filter_end else today
+
+            # --- 1. STATUS JURNAL & PERIODE AKUNTANSI ---
+            jurnal_date_filter = {}
+            if ref_start:
+                jurnal_date_filter['tanggal__gte'] = ref_start
+            if ref_end:
+                jurnal_date_filter['tanggal__lte'] = ref_end
+
+            total_jurnal = JurnalEntry.objects.filter(**jurnal_date_filter).count()
+            jurnal_posted = JurnalEntry.objects.filter(is_posted=True, **jurnal_date_filter).count()
+            jurnal_pending = total_jurnal - jurnal_posted
+
+            periode_aktif = PeriodeAkuntansi.objects.filter(is_aktif=True, is_tutup=False).first()
+            periode_info = {
+                'nama': periode_aktif.nama if periode_aktif else 'Belum ada periode aktif',
+                'tanggal_mulai': periode_aktif.tanggal_mulai if periode_aktif else None,
+                'tanggal_akhir': periode_aktif.tanggal_akhir if periode_aktif else None,
+                'is_aktif': periode_aktif is not None,
+            }
+
+            context['akuntansi_jurnal'] = {
+                'total': total_jurnal,
+                'posted': jurnal_posted,
+                'pending': jurnal_pending,
+                'hari_ini': total_jurnal,
+                'periode': periode_info,
+                'is_filtered': has_date_filter,
+            }
+
+            # --- 2. LABA RUGI DARI JURNAL (bukan estimasi) ---
+            lr_date_filter = {'jurnal__is_posted': True}
+            if ref_start:
+                lr_date_filter['jurnal__tanggal__gte'] = ref_start
+            if ref_end:
+                lr_date_filter['jurnal__tanggal__lte'] = ref_end
+
+            posted_lines = JurnalLine.objects.filter(**lr_date_filter)
+            pendapatan = posted_lines.filter(
+                akun__tipe='pendapatan'
+            ).aggregate(total=Coalesce(Sum('kredit'), Decimal('0')))['total']
+
+            beban = posted_lines.filter(
+                akun__tipe__in=['beban', 'hpp']
+            ).aggregate(total=Coalesce(Sum('debit'), Decimal('0')))['total']
+
+            laba_rugi = pendapatan - beban
+            margin_lr = round((laba_rugi / pendapatan * 100), 1) if pendapatan > 0 else 0
+
+            if has_date_filter and ref_start and ref_end:
+                periode_label = f"{ref_start.strftime('%d/%m/%Y')} - {ref_end.strftime('%d/%m/%Y')}"
+            else:
+                periode_label = ref_start.strftime('%b %Y')
+
+            context['akuntansi_laba_rugi'] = {
+                'pendapatan': pendapatan,
+                'beban': beban,
+                'laba_rugi': laba_rugi,
+                'margin_percent': margin_lr,
+                'is_profit': laba_rugi >= 0,
+                'periode_label': periode_label,
+            }
+
+            # --- 3. ARUS KAS (Kas Masuk / Keluar dalam periode filter) ---
+            kas_date_filter = {'status': 'posted'}
+            if ref_start:
+                kas_date_filter['tanggal__date__gte'] = ref_start
+            if ref_end:
+                kas_date_filter['tanggal__date__lte'] = ref_end
+
+            kas_masuk = KasBankTransaction.objects.filter(
+                tipe__in=['masuk', 'transfer_masuk', 'penyesuaian_masuk'],
+                **kas_date_filter
+            ).aggregate(total=Coalesce(Sum('jumlah'), Decimal('0')))['total']
+
+            kas_keluar = KasBankTransaction.objects.filter(
+                tipe__in=['keluar', 'transfer_keluar', 'penyesuaian_keluar'],
+                **kas_date_filter
+            ).aggregate(total=Coalesce(Sum('jumlah'), Decimal('0')))['total']
+
+            # Total saldo semua akun kas/bank (snapshot)
+            total_saldo_kas = Decimal('0')
+            kas_accounts = KasBankAccount.objects.filter(aktif=True)
+            for acc in kas_accounts:
+                total_saldo_kas += acc.saldo_terhitung
+
+            if has_date_filter:
+                arus_kas_label = f"{ref_start.strftime('%d/%m')} - {ref_end.strftime('%d/%m')}"
+            else:
+                arus_kas_label = "Hari Ini"
+
+            context['akuntansi_arus_kas'] = {
+                'kas_masuk_hari_ini': kas_masuk,
+                'kas_keluar_hari_ini': kas_keluar,
+                'saldo_total': total_saldo_kas,
+                'net_hari_ini': kas_masuk - kas_keluar,
+                'is_positif': (kas_masuk - kas_keluar) >= 0,
+                'label': arus_kas_label,
+            }
+
+            # --- 4. POSISI KEUANGAN (Neraca s/d tanggal ref_end) ---
+            neraca_date_filter = {'jurnal__is_posted': True}
+            if ref_end:
+                neraca_date_filter['jurnal__tanggal__lte'] = ref_end
+
+            total_aset_coa = JurnalLine.objects.filter(
+                akun__tipe='aset', **neraca_date_filter
+            ).aggregate(
+                debit=Coalesce(Sum('debit'), Decimal('0')),
+                kredit=Coalesce(Sum('kredit'), Decimal('0'))
+            )
+            neraca_aset = total_aset_coa['debit'] - total_aset_coa['kredit']
+
+            total_kewajiban_coa = JurnalLine.objects.filter(
+                akun__tipe='kewajiban', **neraca_date_filter
+            ).aggregate(
+                debit=Coalesce(Sum('debit'), Decimal('0')),
+                kredit=Coalesce(Sum('kredit'), Decimal('0'))
+            )
+            neraca_kewajiban = total_kewajiban_coa['kredit'] - total_kewajiban_coa['debit']
+
+            total_modal_coa = JurnalLine.objects.filter(
+                akun__tipe='modal', **neraca_date_filter
+            ).aggregate(
+                debit=Coalesce(Sum('debit'), Decimal('0')),
+                kredit=Coalesce(Sum('kredit'), Decimal('0'))
+            )
+            neraca_modal = total_modal_coa['kredit'] - total_modal_coa['debit']
+
+            # Current Ratio
+            aset_lancar = JurnalLine.objects.filter(
+                akun__tipe='aset', akun__sub_tipe='aset_lancar', **neraca_date_filter
+            ).aggregate(
+                debit=Coalesce(Sum('debit'), Decimal('0')),
+                kredit=Coalesce(Sum('kredit'), Decimal('0'))
+            )
+            aset_lancar_val = aset_lancar['debit'] - aset_lancar['kredit']
+
+            kewajiban_lancar = JurnalLine.objects.filter(
+                akun__tipe='kewajiban', akun__sub_tipe='kewajiban_lancar', **neraca_date_filter
+            ).aggregate(
+                debit=Coalesce(Sum('debit'), Decimal('0')),
+                kredit=Coalesce(Sum('kredit'), Decimal('0'))
+            )
+            kewajiban_lancar_val = kewajiban_lancar['kredit'] - kewajiban_lancar['debit']
+
+            current_ratio = round(aset_lancar_val / kewajiban_lancar_val, 2) if kewajiban_lancar_val > 0 else 0
+
+            context['akuntansi_neraca'] = {
+                'aset': neraca_aset,
+                'kewajiban': neraca_kewajiban,
+                'modal': neraca_modal,
+                'current_ratio': current_ratio,
+                'is_healthy': current_ratio >= 1.0,
+                'per_tanggal': ref_end.strftime('%d %b %Y') if ref_end else '-',
+            }
+
+            # --- 5. HUTANG & PIUTANG (aging berdasarkan ref_end) ---
+            hutang_qs = Hutang.objects.filter(status__in=['belum_bayar', 'sebagian'])
+            total_hutang = sum(h.sisa for h in hutang_qs)
+            hutang_jt_7 = sum(h.sisa for h in hutang_qs if h.jatuh_tempo and (h.jatuh_tempo - ref_end).days <= 7 and (h.jatuh_tempo - ref_end).days >= 0)
+            hutang_overdue = sum(h.sisa for h in hutang_qs if h.jatuh_tempo and h.jatuh_tempo < ref_end)
+
+            piutang_qs = Piutang.objects.filter(status__in=['belum_bayar', 'sebagian'])
+            total_piutang = sum(p.sisa for p in piutang_qs)
+            piutang_jt_7 = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and (p.jatuh_tempo - ref_end).days <= 7 and (p.jatuh_tempo - ref_end).days >= 0)
+            piutang_overdue = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and p.jatuh_tempo < ref_end)
+
+            # Aging piutang berdasarkan ref_end
+            aging_current = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and p.jatuh_tempo >= ref_end)
+            aging_1_30 = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and 1 <= (ref_end - p.jatuh_tempo).days <= 30)
+            aging_31_60 = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and 31 <= (ref_end - p.jatuh_tempo).days <= 60)
+            aging_61_90 = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and 61 <= (ref_end - p.jatuh_tempo).days <= 90)
+            aging_over_90 = sum(p.sisa for p in piutang_qs if p.jatuh_tempo and (ref_end - p.jatuh_tempo).days > 90)
+
+            context['akuntansi_hutang_piutang'] = {
+                'total_hutang': total_hutang,
+                'hutang_jt_7hari': hutang_jt_7,
+                'hutang_overdue': hutang_overdue,
+                'hutang_count': hutang_qs.count(),
+                'total_piutang': total_piutang,
+                'piutang_jt_7hari': piutang_jt_7,
+                'piutang_overdue': piutang_overdue,
+                'piutang_count': piutang_qs.count(),
+                'aging_current': aging_current,
+                'aging_1_30': aging_1_30,
+                'aging_31_60': aging_31_60,
+                'aging_61_90': aging_61_90,
+                'aging_over_90': aging_over_90,
+            }
+
+            # --- 6. PAJAK (PPN dalam periode filter) ---
+            pajak_date_filter = {'status__in': ['approved', 'reported']}
+            if ref_start:
+                pajak_date_filter['tanggal__gte'] = ref_start
+            if ref_end:
+                pajak_date_filter['tanggal__lte'] = ref_end
+
+            ppn_keluaran_bulan = FakturPajak.objects.filter(
+                tipe='keluaran', **pajak_date_filter
+            ).aggregate(total=Coalesce(Sum('ppn'), Decimal('0')))['total']
+
+            ppn_masukan_bulan = FakturPajak.objects.filter(
+                tipe='masukan', **pajak_date_filter
+            ).aggregate(total=Coalesce(Sum('ppn'), Decimal('0')))['total']
+
+            ppn_belum_setor = ppn_keluaran_bulan - ppn_masukan_bulan
+            setting_pajak = SettingPajak.get_setting()
+
+            if has_date_filter and ref_start and ref_end:
+                pajak_label = f"{ref_start.strftime('%d/%m/%Y')} - {ref_end.strftime('%d/%m/%Y')}"
+            else:
+                pajak_label = ref_start.strftime('%B %Y')
+
+            context['akuntansi_pajak'] = {
+                'ppn_keluaran': ppn_keluaran_bulan,
+                'ppn_masukan': ppn_masukan_bulan,
+                'ppn_belum_setor': max(ppn_belum_setor, Decimal('0')),
+                'tarif_ppn': setting_pajak.tarif_ppn,
+                'is_pkp': setting_pajak.is_pkp,
+                'periode_label': pajak_label,
+            }
+
+            # --- 7. PIUTANG WIDGET (restored) ---
+            context['piutang_widget'] = {
+                'total_piutang': total_piutang,
+                'sisa_piutang': total_piutang,
+                'total_jatuh_tempo': piutang_jt_7,
+                'customer_aktif': piutang_qs.values('customer').distinct().count(),
+            }
+
+        except Exception as e:
+            logger.warning("Gagal mengambil data akuntansi untuk dashboard: %s", e)
+            context['akuntansi_jurnal'] = {'total': 0, 'posted': 0, 'pending': 0, 'hari_ini': 0, 'periode': {'nama': '-', 'is_aktif': False}, 'is_filtered': False}
+            context['akuntansi_laba_rugi'] = {'pendapatan': 0, 'beban': 0, 'laba_rugi': 0, 'margin_percent': 0, 'is_profit': False, 'periode_label': '-'}
+            context['akuntansi_arus_kas'] = {'kas_masuk_hari_ini': 0, 'kas_keluar_hari_ini': 0, 'saldo_total': 0, 'net_hari_ini': 0, 'is_positif': True, 'label': 'Hari Ini'}
+            context['akuntansi_neraca'] = {'aset': 0, 'kewajiban': 0, 'modal': 0, 'current_ratio': 0, 'is_healthy': False, 'per_tanggal': '-'}
+            context['akuntansi_hutang_piutang'] = {'total_hutang': 0, 'hutang_jt_7hari': 0, 'hutang_overdue': 0, 'hutang_count': 0, 'total_piutang': 0, 'piutang_jt_7hari': 0, 'piutang_overdue': 0, 'piutang_count': 0, 'aging_current': 0, 'aging_1_30': 0, 'aging_31_60': 0, 'aging_61_90': 0, 'aging_over_90': 0}
+            context['akuntansi_pajak'] = {'ppn_keluaran': 0, 'ppn_masukan': 0, 'ppn_belum_setor': 0, 'tarif_ppn': 11, 'is_pkp': False, 'periode_label': '-'}
+            context['piutang_widget'] = {'total_piutang': 0, 'sisa_piutang': 0, 'total_jatuh_tempo': 0, 'customer_aktif': 0}
 
         return context

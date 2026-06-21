@@ -148,10 +148,49 @@ class Akun(models.Model):
         """Hitung level hierarki berdasarkan parent chain."""
         level = 0
         parent = self.parent
+        visited = {self.pk}
         while parent:
             level += 1
+            if parent.pk in visited:
+                break
+            visited.add(parent.pk)
             parent = parent.parent
         return level
+
+    def clean(self):
+        if self.parent_id:
+            visited = {self.pk}
+            current = self.parent
+            while current:
+                if current.pk in visited:
+                    raise ValidationError("Circular parent reference detected")
+                visited.add(current.pk)
+                current = current.parent
+        # validate saldo_normal matches tipe
+        # CONTRA accounts have OPPOSITE saldo_normal from their parent tipe
+        debit_types = ['aset', 'hpp', 'beban']
+        kredit_types = ['kewajiban', 'modal', 'pendapatan']
+        contra_sub_types = ['contra_aset', 'contra_pendapatan', 'prive']
+
+        is_contra = self.sub_tipe in contra_sub_types
+
+        if self.tipe in debit_types and not is_contra and self.saldo_normal != 'debit':
+            raise ValidationError(f"Akun bertipe {self.tipe} harus memiliki saldo normal debit")
+        if self.tipe in kredit_types and not is_contra and self.saldo_normal != 'kredit':
+            raise ValidationError(f"Akun bertipe {self.tipe} harus memiliki saldo normal kredit")
+        # Contra aset (e.g. Akumulasi Penyusutan) has saldo_normal=kredit (opposite of aset)
+        if self.tipe in debit_types and is_contra and self.saldo_normal != 'kredit':
+            raise ValidationError(f"Contra akun bertipe {self.tipe} harus memiliki saldo normal kredit")
+        # Contra pendapatan (e.g. Retur/Diskon) has saldo_normal=debit (opposite of pendapatan)
+        if self.tipe in kredit_types and is_contra and self.saldo_normal != 'debit':
+            raise ValidationError(f"Contra akun bertipe {self.tipe} harus memiliki saldo normal debit")
+        # Prive (penarikan pemilik) under modal has saldo_normal=debit (opposite of modal)
+        if self.tipe == 'modal' and self.sub_tipe == 'prive' and self.saldo_normal != 'debit':
+            raise ValidationError("Akun Prive harus memiliki saldo normal debit")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class PeriodeAkuntansi(models.Model):
@@ -199,7 +238,20 @@ class PeriodeAkuntansi(models.Model):
             if self.tanggal_mulai >= self.tanggal_akhir:
                 raise ValidationError("Tanggal mulai harus sebelum tanggal akhir.")
 
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        if self.is_aktif:
+            PeriodeAkuntansi.objects.filter(is_aktif=True).exclude(pk=self.pk).update(is_aktif=False)
+        super().save(*args, **kwargs)
 
+
+# =====================================================================
+    # REKOMENDASI PRODUCTION: Pertimbangkan soft delete untuk model ini.
+    # Soft delete (is_deleted = BooleanField) menjaga audit trail dan
+    # mencegah kehilangan data saat record dihapus secara tidak sengaja.
+    # Implementasi: tambahkan is_deleted=True/False dan override delete()
+    # atau gunakan Django manager dengan filter is_deleted=False.
+    # =====================================================================
 class JurnalEntry(models.Model):
     """
     Model untuk JURNAL ENTRY — Header jurnal transaksi.
@@ -326,16 +378,26 @@ class JurnalEntry(models.Model):
             models.Index(fields=['sumber', 'sumber_id'], name='akt_jrn_src_id_idx'),
             models.Index(fields=['cabang', 'tanggal'], name='akt_jrn_cbg_tgl_idx'),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['sumber', 'sumber_id'],
+                condition=~models.Q(sumber='manual'),
+                name='unique_jurnal_per_source'
+            )
+        ]
 
     def __str__(self):
         return f"{self.nomor} - {self.deskripsi[:50]}"
 
     def save(self, *args, **kwargs):
-        """Override save untuk auto-generate nomor jurnal."""
-        from django.db import transaction
-        with transaction.atomic():
-            if not self.nomor:
+        """Override save untuk auto-generate nomor jurnal dan validasi."""
+        from django.db import transaction, IntegrityError
+        self.full_clean()
+        if not self.nomor:
+            with transaction.atomic():
                 self.nomor = self.generate_nomor()
+                super().save(*args, **kwargs)
+        else:
             super().save(*args, **kwargs)
 
     def generate_nomor(self):
@@ -344,8 +406,8 @@ class JurnalEntry(models.Model):
         Format: JU-{TAHUN}-{NOMOR_URUT_5_DIGIT}
         Contoh: JU-2026-00001
         """
-        from datetime import datetime
-        today = datetime.now()
+        from django.utils import timezone
+        today = timezone.now()
         prefix = f"JU-{today.year}"
 
         last_jurnal = JurnalEntry.objects.select_for_update().filter(
@@ -459,3 +521,7 @@ class JurnalLine(models.Model):
             )
         if self.debit < 0 or self.kredit < 0:
             raise ValidationError("Nilai Debit dan Kredit tidak boleh negatif.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

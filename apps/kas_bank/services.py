@@ -101,6 +101,25 @@ def create_operational_mutation(
     jurnal_entry=None,
     user=None,
 ):
+    """
+    Membuat rekam jejak mutasi operasional (KasBankTransaction) setiap kali ada arus kas masuk/keluar.
+    Mutasi ini bersifat single-entry untuk keperluan tracking treasury (bukan jurnal akuntansi double-entry).
+    
+    Fungsi ini memiliki logika Idempotent (mencegah duplikasi). Jika mutasi untuk transaksi
+    (sumber_id + sumber_model) yang sama sudah ada dan masih berstatus 'posted', 
+    ia akan melakukan UPDATE bukan CREATE baru.
+
+    Parameters:
+    - akun_kas_bank: KasBankAccount (akun treasury)
+    - tipe: str (pemasukan, pengeluaran, transfer_masuk, dll)
+    - tanggal: datetime / date
+    - jumlah: Decimal
+    - deskripsi: str (keterangan mutasi)
+    - sumber_app & sumber_model: str (melacak asal usul transaksi, misal 'pos', 'PosTransaction')
+    - sumber_id: int (PK dari transaksi asal)
+    
+    Returns: KasBankTransaction instance atau None jika jumlah = 0.
+    """
     if not akun_kas_bank:
         return None
 
@@ -152,6 +171,24 @@ def create_operational_mutation(
 
 
 def post_manual_kas_bank_transaction(kas_bank_transaction, user=None):
+    """
+    Fungsi krusial untuk mem-posting mutasi kas/bank manual (seperti deposit atau penarikan manual)
+    menjadi jurnal akuntansi (double-entry).
+
+    Logika Akuntansi:
+    - Jika uang masuk (tipe 'masuk'): 
+      Debit: Kas/Bank, Kredit: Akun Lawan
+    - Jika uang keluar (tipe 'keluar'): 
+      Debit: Akun Lawan, Kredit: Kas/Bank
+
+    Setelah jurnal berhasil dibuat (menggunakan transaction.atomic), ID jurnal 
+    akan disematkan (linked) ke mutasi tersebut agar tidak di-post dua kali.
+
+    Raises:
+    - ValueError: Jika akun_lawan tidak diisi (karena akuntansi butuh akun kredit).
+    
+    Returns: JurnalEntry instance (atau None jika tipe tidak relevan).
+    """
     if kas_bank_transaction.status != "posted" or kas_bank_transaction.jurnal_entry_id:
         return kas_bank_transaction.jurnal_entry
 

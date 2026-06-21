@@ -215,8 +215,22 @@ class PembayaranPPN(models.Model):
         super().save(*args, **kwargs)
 
     def generate_nomor(self):
-        prefix = f"PPN/{self.masa_tahun}/{self.masa_bulan:02d}"
-        # Cek apakah sudah ada record dengan periode ini (unique_together)
-        if PembayaranPPN.objects.filter(masa_bulan=self.masa_bulan, masa_tahun=self.masa_tahun).exists():
-            return f"{prefix}/REV"
-        return f"{prefix}/0001"
+        prefix = f"PPN/{self.masa_tahun}"
+        # Find the highest existing number for this year
+        last_num = 0
+        for existing_nomor in PembayaranPPN.objects.filter(
+            nomor__startswith=prefix
+        ).values_list('nomor', flat=True):
+            try:
+                num = int(existing_nomor.split('/')[-1])
+                if num > last_num:
+                    last_num = num
+            except (ValueError, IndexError):
+                continue
+        # Generate next number and ensure uniqueness
+        next_num = last_num + 1
+        new_nomor = f"{prefix}/{next_num:03d}"
+        while PembayaranPPN.objects.filter(nomor=new_nomor).exists():
+            next_num += 1
+            new_nomor = f"{prefix}/{next_num:03d}"
+        return new_nomor

@@ -31,6 +31,53 @@
 ==========================================================================
 """
 
+import logging
+logger = logging.getLogger(__name__)
+
+# ==========================================================================
+# PANDUAN DJANGO UNTUK DEVELOPER PEMULA (baca ini sebelum mempelajari views)
+# ==========================================================================
+#
+# APA ITU CLASS-BASED VIEW (CBV)?
+# - CBV = class Python yang menangani HTTP request dan return response
+# - Django menyediakan CBV bawaan: ListView, CreateView, UpdateView, DeleteView
+# - Setiap CBV punya "lifecycle" (siklus hidup) yang bisa di-customize
+#
+# SIKLUS HIDUP CBV (urutan method yang dipanggil):
+# 1. as_view()     → Entry point, dipanggil oleh URL router
+# 2. dispatch()    → Tentukan method (GET/POST) → panggil get() atau post()
+# 3. get()/post()  → Handle request, kumpulkan data
+# 4. get_queryset()→ Ambil data dari database (bisa di-filter/optimasi)
+# 5. get_context_data() → Siapkan data untuk template (variabel {{ }})
+# 6. render()      → Gabungkan template + context → HTML response
+#
+# METHOD PENTING YANG SERING DI-OVERRIDE:
+# - get_queryset()     → Optimasi query (prefetch_related, select_related)
+# - get_context_data() → Tambah variabel ke template (self.context)
+# - form_valid()       → Proses setelah form divalidasi (sebelum save)
+# - get_success_url()  → URL redirect setelah operasi berhasil
+#
+# DECORATOR YANG SERING DIGUNAKAN:
+# @login_required       → User HARUS login, jika tidak → redirect ke /login/
+# @permission_required  → User harus punya permission tertentu (RBAC)
+# @require_http_methods → Batasi method yang diterima (GET, POST, dll)
+# @never_cache          → Response tidak boleh di-cache oleh browser
+#
+# POLA UMUM VIEW DI PROYEK INI:
+# class MyListView(SubModulePermissionMixin, ListView):
+#     module_name = 'nama_modul'          # Untuk pengecekan RBAC
+#     sub_module_name = 'nama_sub_modul'  # Sub-modul yang diakses
+#     model = MyModel                      # Model database yang dipakai
+#     template_name = 'modul/page.html'    # File HTML template
+#
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context = TemplateLayout.init(self, context)  # WAJIB: setup layout
+#         context['data_tambahan'] = ...    # Tambah data custom
+#         return context
+# ==========================================================================
+
+
 from django.shortcuts import render
 from django.db.models import ProtectedError
 from django.shortcuts import get_object_or_404
@@ -46,13 +93,13 @@ from apps.pos.models import POSTransaction, POSTransactionItem, MetodePembayaran
 from apps.produk.models import Produk, Gudang, Stok
 from apps.core.mixins import ReadPermissionMixin, CreatePermissionMixin, UpdatePermissionMixin, DeletePermissionMixin
 from apps.core.permissions import permission_required
+from apps.core.stock_utils import update_cabang_ke_stok_terbanyak, rollback_stok_items, get_gudang_context_data, hitung_rating_dari_rasio
 import json
 import logging  # Modul logging standar Python — pengganti print() untuk production
 from decimal import Decimal
 
 # Inisialisasi logger untuk modul POS
 # Menggunakan __name__ agar nama logger sesuai nama modul (apps.pos.views)
-logger = logging.getLogger(__name__)
 
 
 # ╔══════════════════════════════════════════════════════════════╗
@@ -92,14 +139,7 @@ class POSIndexView(CreatePermissionMixin, TemplateView):
         context['metode_non_tunai'] = MetodePembayaran.objects.filter(aktif=True, tipe='non_tunai')
         # Gudang aktif + pajak persen (dipakai untuk kalkulasi di frontend)
         # Gudang aktif + pajak persen efektif (dengan fallback ke pengaturan perusahaan)
-        gudang_qs = Gudang.objects.filter(aktif=True)
-        gudang_data = []
-        for g in gudang_qs:
-            gudang_data.append({
-                'id': g.id, 'nama': g.nama, 'kode': g.kode,
-                'pajak_persen': float(g.get_tarif_ppn())
-            })
-        context['gudang_list'] = gudang_data
+        context['gudang_list'] = get_gudang_context_data()
         # Customer terdaftar dari modul penjualan (untuk dropdown di modal pembayaran)
         from apps.penjualan.models import Customer
         context['customer_list'] = Customer.objects.filter(aktif=True).order_by('nama')
@@ -161,16 +201,7 @@ class POSIndexView(CreatePermissionMixin, TemplateView):
                 if max_sold > 0:
                     ratio = total / max_sold   # Rasio terhadap produk paling laris
                     # Mapping rasio ke rating bintang (persentil)
-                    if ratio >= 0.8:
-                        rating_map[produk_id] = 5   # Top 20% → 5 bintang ⭐⭐⭐⭐⭐
-                    elif ratio >= 0.6:
-                        rating_map[produk_id] = 4   # 60-80% → 4 bintang ⭐⭐⭐⭐
-                    elif ratio >= 0.4:
-                        rating_map[produk_id] = 3   # 40-60% → 3 bintang ⭐⭐⭐
-                    elif ratio >= 0.2:
-                        rating_map[produk_id] = 2   # 20-40% → 2 bintang ⭐⭐
-                    else:
-                        rating_map[produk_id] = 1   # <20% → 1 bintang ⭐
+                    rating_map[produk_id] = hitung_rating_dari_rasio(ratio)
                 else:
                     rating_map[produk_id] = 1       # Edge case: max = 0
         else:
@@ -331,10 +362,10 @@ def create_transaction(request):
                 kasir=request.user,
                 gudang=gudang,
                 nama_customer=data.get('customer_name', 'Umum'),
-                diskon=Decimal(str(data.get('diskon', 0))),
-                pajak=Decimal(str(data.get('pajak', 0))),
+                diskon=max(Decimal('0'), Decimal(str(data.get('diskon', 0)))),
+                pajak=max(Decimal('0'), Decimal(str(data.get('pajak', 0)))),
                 metode_pembayaran=metode_pembayaran,
-                jumlah_bayar=Decimal(str(data.get('jumlah_bayar', 0))),
+                jumlah_bayar=max(Decimal('0'), Decimal(str(data.get('jumlah_bayar', 0)))),
                 status=data.get('status', 'paid'),  # Support kasbon: 'unpaid' jika dikirim dari frontend
                 catatan=data.get('catatan', '')
             )
@@ -411,13 +442,7 @@ def create_transaction(request):
                 logger.debug("Stok akhir: %s — dikurangi sebanyak %s (satuan dasar)", stok.jumlah, qty_stok)
 
                 # Update cabang produk ke gudang dengan stok terbanyak
-                stok_terbanyak = Stok.objects.filter(
-                    produk=produk, jumlah__gt=0
-                ).order_by('-jumlah').first()
-
-                if stok_terbanyak and produk.cabang != stok_terbanyak.gudang:
-                    produk.cabang = stok_terbanyak.gudang
-                    produk.save(update_fields=['cabang'])
+                update_cabang_ke_stok_terbanyak(produk)
                 
             logger.info("Transaksi %s BERHASIL!", pos_transaction.nomor_transaksi)
                 
