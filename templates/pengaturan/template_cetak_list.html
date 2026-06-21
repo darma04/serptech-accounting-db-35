@@ -207,6 +207,8 @@
             </div>
         </div>
         <div class="card-body">
+            {% if templates %}
+
             <div class="card-datatable table-responsive">
                 <table class="table table-hover" id="templateTable">
                     <thead class="table-light">
@@ -222,8 +224,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% if templates %}
-                        {% for template in templates %}
+                    {% for template in templates %}
                         <tr>
                             <td>{{ forloop.counter }}</td>
                             <td><strong>{{ template.nama }}</strong></td>
@@ -273,19 +274,8 @@
                                 {% endif %}
                             </td>
                         </tr>
-                        {% endfor %}
-                        {% else %}
-                        <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                <i class="ri-file-list-3-line ri-3x text-muted mb-3 d-block"></i>
-                                <p class="text-muted mb-2">Belum ada template cetak</p>
-                                {% if can_create.pengaturan %}
-                                <p class="text-muted small">Klik "Tambah Template" untuk menambahkan template baru</p>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endif %}
-                    </tbody>
+                    {% endfor %}
+                </tbody>
                     <tfoot class="table-footer-summary">
                         <tr>
                             <td colspan="4" class="text-start ps-4 py-3" style="vertical-align: middle;">
@@ -323,6 +313,38 @@
                     </tfoot>
                 </table>
             </div>
+
+            {% else %}
+
+            <div class="card-body">
+
+                <div class="text-center py-4 py-md-5 px-3 px-md-4">
+
+                    <div class="mb-4">
+
+                        <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
+
+                             style="width: 88px; height: 88px;">
+
+                            <i class="ri-printer-line" style="font-size: 2.8rem;"></i>
+
+                        </div>
+
+                    </div>
+
+                    <h5 class="mb-3">Belum Ada Template</h5>
+
+                    <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
+
+                        Daftar template masih kosong.
+
+                    </p>
+
+                </div>
+
+            </div>
+
+            {% endif %}
         </div>
     </div>
 </div>
