@@ -639,6 +639,7 @@
     $(document).ready(function () {
         
         if ($('#tabelRekon tbody tr').length > 0 && !$('#tabelRekon tbody tr td[colspan]').length) {
+            {% if reconciliation_list %}
             const table = $('#tabelRekon').DataTable({
                 language: {
                     "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
@@ -660,6 +661,7 @@
                     $('.dataTables_filter input').attr('placeholder', 'Cari rekonsiliasi...');
                 }
             });
+            {% endif %}
         }
     });
 

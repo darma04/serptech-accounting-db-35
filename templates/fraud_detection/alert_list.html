@@ -619,6 +619,7 @@
     $(document).ready(function () {
         
         if ($('#tabelAnomali tbody tr').length > 0 && !$('#tabelAnomali tbody tr td[colspan]').length) {
+            {% if users %}
             const table = $('#tabelAnomali').DataTable({
                 language: {
                     "sEmptyTable": "Tidak ada data yang tersedia pada tabel ini",
@@ -650,6 +651,7 @@
                     $('.dataTables_filter input').attr('placeholder', 'Cari anomali...');
                 }
             });
+            {% endif %}
         }
     });
 
