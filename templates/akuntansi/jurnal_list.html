@@ -370,8 +370,11 @@ Fitur: filter tanggal/sumber/cabang/status, export Excel & PDF, cards.
     .datatables-jurnal thead th { font-weight: 600; font-size: 0.8125rem; }
     @media (max-width: 768px) {
         .card-datatable { overflow-x: hidden !important; max-width: 100%; }
-        {% if jurnal_list %}.datatables-jurnal { min-width: 900px !important; }{% endif %}
+        
         .dataTables_wrapper { overflow-x: hidden !important; max-width: 100% !important; }
+    {% if jurnal_list %}
+    @media (max-width: 768px) {.datatables-jurnal { min-width: 900px !important; }}
+    {% endif %}
     }
 </style>
 <script>

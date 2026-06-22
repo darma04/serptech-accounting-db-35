@@ -518,12 +518,15 @@ Fitur: filter, export Excel & PDF, delete modal.
             max-width: 100%;
         }
 
-        {% if transaksi_list %}.datatables-biaya { min-width: 950px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if transaksi_list %}
+    @media (max-width: 768px) {.datatables-biaya { min-width: 950px !important; }}
+    {% endif %}
     }
 </style>
 

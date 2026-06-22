@@ -363,12 +363,15 @@ Fitur: tambah, edit, hapus satuan.
             max-width: 100%;
         }
 
-        {% if satuan_list %}.datatables-satuan { min-width: 700px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if satuan_list %}
+    @media (max-width: 768px) {.datatables-satuan { min-width: 700px !important; }}
+    {% endif %}
     }
 </style>
 <script>

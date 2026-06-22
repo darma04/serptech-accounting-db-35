@@ -344,7 +344,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof $ !== 'undefined') {
         ['#accountBalanceTable', '#recentTransactionTable'].forEach(function (selector) {
             if ($(selector).length && !$.fn.dataTable.isDataTable(selector)) {
-                {% if account_cards %}
+                
+            }
+    {% if account_cards %}
+    @media (max-width: 575.98px) {
                 $(selector).DataTable({
                     language: {
                         sEmptyTable: 'Tidak ada data yang tersedia',
@@ -367,8 +370,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     order: [],
                     responsive: false
                 });
-                {% endif %}
-            }
+                }
+    {% endif %}
         });
     }
 

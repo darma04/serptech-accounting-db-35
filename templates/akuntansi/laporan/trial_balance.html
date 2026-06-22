@@ -300,7 +300,10 @@
 <script>
 $(document).ready(function () {
     if (!$.fn.dataTable.isDataTable('#tbTable')) {
+    
+    }
     {% if cabang_list %}
+    @media (max-width: 768px) {
     const table = $('#tbTable').DataTable({
         language: {
             "sEmptyTable": "Tidak ada data yang tersedia",
@@ -322,8 +325,8 @@ $(document).ready(function () {
             $('.dataTables_filter input').attr('placeholder', 'Cari neraca saldo...');
         }
     });
-    {% endif %}
     }
+    {% endif %}
 });
 
 document.addEventListener('DOMContentLoaded', function () {

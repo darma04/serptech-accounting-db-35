@@ -421,6 +421,14 @@
     }
 </style>
 
+{% if transfer_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-transfer { min-width: 900px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
     
     var transferDataTable = null;
@@ -429,7 +437,6 @@
         flatpickr('#startDate', { dateFormat: 'Y-m-d', locale: 'id' });
         flatpickr('#endDate', { dateFormat: 'Y-m-d', locale: 'id' });
 
-        {% if transfer_list %}
         {% if gudang_list %}
         transferDataTable = $('#transferTable').DataTable({
             language: {
@@ -462,7 +469,6 @@
                 $('.dataTables_filter input').attr('placeholder', 'Cari transfer...');
             }
         });
-        {% endif %}
         {% endif %}
     });
 

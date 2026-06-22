@@ -431,12 +431,15 @@ Fitur: filter, search, export, detail.
             max-width: 100%;
         }
 
-        {% if metode_pembayaran %}.datatables-invoice { min-width: 1000px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if metode_pembayaran %}
+    @media (max-width: 768px) {.datatables-invoice { min-width: 1000px !important; }}
+    {% endif %}
     }
 </style>
 

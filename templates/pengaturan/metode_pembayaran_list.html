@@ -479,12 +479,15 @@
             max-width: 100%;
         }
 
-        {% if metode_list %}.datatables-metode { min-width: 1300px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if metode_list %}
+    @media (max-width: 768px) {.datatables-metode { min-width: 1300px !important; }}
+    {% endif %}
     }
 </style>
 

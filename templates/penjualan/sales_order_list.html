@@ -469,6 +469,14 @@ Fitur: export Excel & PDF, filter, search.
     }
 </style>
 
+{% if sales_order_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-so { min-width: 1000px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
     $(document).ready(function () {
         
@@ -482,7 +490,6 @@ Fitur: export Excel & PDF, filter, search.
             locale: 'id'
         });
 
-        {% if sales_order_list %}
         {% if customer_list %}
         const table = $('#soTable').DataTable({
             language: {
@@ -515,7 +522,6 @@ Fitur: export Excel & PDF, filter, search.
                 $('.dataTables_filter input').attr('placeholder', 'Cari sales order...');
             }
         });
-        {% endif %}
         {% endif %}
     });
 

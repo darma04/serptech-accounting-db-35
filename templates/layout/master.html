@@ -648,13 +648,16 @@ function showExportError() {
     })();
     </script>
 
+    
+        {% if rbac_can_create == False %}
     {% if rbac_current_module %}
+    @media (max-width: 1199.98px) {
     <style>
         {% if rbac_can_delete == False %}
         
         .btn-delete, [data-action="delete"], [data-bs-target*="delete"], [data-bs-target*="Delete"], form[action*="delete"] button[type="submit"], a[href*="delete"], a[href*="hapus"] { display: none !important; }
-        {% endif %}
-        {% if rbac_can_create == False %}
+        }
+    {% endif %}
         
         .btn-create, [data-action="create"], a[href*="tambah"], a[href*="create"] { display: none !important; }
         {% endif %}

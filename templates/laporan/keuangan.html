@@ -388,7 +388,7 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-                {% if sales_order_list %}
+                {% if sales_order_list or pos_transaction_list %}
 <div class="card-datatable table-responsive">
             <table class="table table-hover" id="tabelPemasukan">
                 <thead>
@@ -465,13 +465,6 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not sales_order_list and not pos_transaction_list %}
-                    <tr>
-                        <td colspan="8" class="text-center py-3">
-                            <p class="text-muted mb-0">Belum ada pemasukan</p>
-                        </td>
-                    </tr>
-                    {% endif %}
                 </tbody>
                 <tfoot class="table-footer-summary">
                     <tr>
@@ -506,12 +499,12 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                 <div class="mb-4">
                     <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
                          style="width: 88px; height: 88px;">
-                        <i class="ri-inbox-line" style="font-size: 2.8rem;"></i>
+                        <i class="ri-money-dollar-circle-line" style="font-size: 2.8rem;"></i>
                     </div>
                 </div>
-                <h5 class="mb-3">Belum Ada Data Keuangan</h5>
+                <h5 class="mb-3">Belum Ada Pemasukan</h5>
                 <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-                    Daftar keuangan masih kosong.
+                    Belum ada data pemasukan untuk periode yang dipilih.
                 </p>
             </div>
         </div>
@@ -529,7 +522,7 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-                {% if purchase_order_list %}
+                {% if purchase_order_list or transaksi_biaya_list or produk_pengeluaran_list %}
 <div class="card-datatable table-responsive">
             <table class="table table-hover" id="tabelPengeluaran">
                 <thead>
@@ -613,13 +606,6 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                         </td>
                     </tr>
                     {% endfor %}
-                    {% if not purchase_order_list and not transaksi_biaya_list and not produk_pengeluaran_list %}
-                    <tr>
-                        <td colspan="7" class="text-center py-3">
-                            <p class="text-muted mb-0">Belum ada pengeluaran</p>
-                        </td>
-                    </tr>
-                    {% endif %}
                 </tbody>
                 <tfoot class="table-footer-summary">
                     <tr>
@@ -654,12 +640,12 @@ Filter: periode, kategori. Grafik dan tabel ringkasan.
                 <div class="mb-4">
                     <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
                          style="width: 88px; height: 88px;">
-                        <i class="ri-inbox-line" style="font-size: 2.8rem;"></i>
+                        <i class="ri-shopping-bag-line" style="font-size: 2.8rem;"></i>
                     </div>
                 </div>
-                <h5 class="mb-3">Belum Ada Data Keuangan</h5>
+                <h5 class="mb-3">Belum Ada Pengeluaran</h5>
                 <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-                    Daftar keuangan masih kosong.
+                    Belum ada data pengeluaran untuk periode yang dipilih.
                 </p>
             </div>
         </div>

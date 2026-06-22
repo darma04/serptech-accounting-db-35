@@ -452,12 +452,15 @@ Tabel: nomor transaksi, tanggal, customer, total, status.
             max-width: 100%;
         }
 
-        {% if gudang_list %}.datatables-transaction { min-width: 1100px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if gudang_list %}
+    @media (max-width: 768px) {.datatables-transaction { min-width: 1100px !important; }}
+    {% endif %}
     }
 </style>
 

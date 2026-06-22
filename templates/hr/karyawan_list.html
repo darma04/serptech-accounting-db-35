@@ -436,12 +436,15 @@
             max-width: 100%;
         }
 
-        {% if karyawan_list %}.datatables-karyawan { min-width: 900px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if karyawan_list %}
+    @media (max-width: 768px) {.datatables-karyawan { min-width: 900px !important; }}
+    {% endif %}
     }
 
     .avatar-initial {

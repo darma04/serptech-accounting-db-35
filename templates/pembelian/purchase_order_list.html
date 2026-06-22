@@ -406,14 +406,20 @@ Fitur: export Excel & PDF, filter.
     }
 </style>
 
+{% if purchase_order_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-po { min-width: 1100px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
     $(document).ready(function () {
         
         flatpickr('.flatpickr-input', { dateFormat: 'Y-m-d' });
 
         {% if purchase_order_list %}
-        
-        {% if supplier_list %}
         const table = $('#poTable').DataTable({
             language: {
                 "sEmptyTable": "Tidak ada data yang tersedia",
@@ -441,7 +447,6 @@ Fitur: export Excel & PDF, filter.
                 $('.dataTables_filter input').attr('placeholder', 'Cari purchase order...');
             }
         });
-        {% endif %}
         {% endif %}
     });
 

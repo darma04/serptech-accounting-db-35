@@ -325,11 +325,19 @@
     @media (max-width: 768px) { .card-datatable { overflow-x: hidden !important; } .datatables-jabatan { min-width: 900px !important; } }
 </style>
 
+{% if jabatan_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-jabatan { min-width: 900px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
 let dataTable;
 
 $(document).ready(function() {
-    {% if jabatan_list %}
+    
     {% if departemen_list %}
     dataTable = $('#jabatanTable').DataTable({
         language: {
@@ -344,7 +352,6 @@ $(document).ready(function() {
         columnDefs: [{ orderable: false, targets: [6] }],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
     });
-    {% endif %}
     {% endif %}
 });
 

@@ -302,7 +302,10 @@
 let dataTable;
 
 $(document).ready(function() {
+    
+}
     {% if departemen_list %}
+    @media (max-width: 768px) {
     dataTable = $('#departemenTable').DataTable({
         language: {
             "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data",
@@ -316,8 +319,8 @@ $(document).ready(function() {
         columnDefs: [{ orderable: false, targets: [5] }],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
     });
-    {% endif %}
-});
+    }
+    {% endif %});
 
 function applyFilter() {
     if (!dataTable) return;

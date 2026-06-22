@@ -422,12 +422,19 @@ Tabel: tanggal, produk, gudang, qty sebelum, qty sesudah, alasan.
     }
 </style>
 
+{% if adjustment_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-adjustment { min-width: 1000px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
     $(document).ready(function () {
         flatpickr('#startDate', { dateFormat: 'Y-m-d', locale: 'id' });
         flatpickr('#endDate', { dateFormat: 'Y-m-d', locale: 'id' });
 
-        {% if adjustment_list %}
         {% if gudang_list %}
         const table = $('#adjustmentTable').DataTable({
             language: {
@@ -460,7 +467,6 @@ Tabel: tanggal, produk, gudang, qty sebelum, qty sesudah, alasan.
                 $('.dataTables_filter input').attr('placeholder', 'Cari adjustment...');
             }
         });
-        {% endif %}
         {% endif %}
     });
 

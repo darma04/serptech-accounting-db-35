@@ -292,7 +292,10 @@
     .dataTables_wrapper .dataTables_paginate .paginate_button{padding:.438rem .875rem;border-radius:.375rem;margin:0 .125rem;border:none;background:transparent;color:#697a8d}
     .dataTables_wrapper .dataTables_paginate .paginate_button.current{background:#696cff!important;color:#fff!important;border:none}
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled){background:rgba(105,108,255,.08)!important;border:none;color:#696cff!important}
-    @media(max-width:768px){.card-datatable{overflow-x:hidden!important;max-width:100%}{% if aset_list %}#asetTable{min-width:1000px!important}{% endif %}}
+    @media(max-width:768px){.card-datatable{overflow-x:hidden!important;max-width:100%}}
+    {% if aset_list %}
+    @media(max-width:768px){#asetTable{min-width:1000px!important}}
+    {% endif %}
 </style>
 <script>
 $(document).ready(function(){

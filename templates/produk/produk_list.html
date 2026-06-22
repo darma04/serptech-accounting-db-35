@@ -549,12 +549,15 @@
             max-width: 100%;
         }
 
-        {% if produk_list %}.datatables-produk { min-width: 1200px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if produk_list %}
+    @media (max-width: 768px) {.datatables-produk { min-width: 1200px !important; }}
+    {% endif %}
 
         .datatables-produk tfoot td {
             white-space: nowrap;

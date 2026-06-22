@@ -308,7 +308,20 @@ FRAUD DETECTION DASHBOARD - Grafik gelombang (ApexCharts Area) + Doughnut
                         Semua</a>
                 </div>
                 <div class="card-body">
-                    {% if risk_users %}
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">
+                        <i class="ri-money-dollar-box-line me-2"></i>Rekonsiliasi Kas Terbaru
+                    </h5>
+                    <a href="{% url 'fraud_detection:cash_list' %}
+    {% if risk_users %}
+    @media (max-width: 575.98px) {
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -343,18 +356,8 @@ FRAUD DETECTION DASHBOARD - Grafik gelombang (ApexCharts Area) + Doughnut
                         <i class="ri-shield-check-line ri-48px mb-2 d-block" style="opacity:0.3;"></i>
                         Tidak ada karyawan berisiko saat ini
                     </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="card-title mb-0">
-                        <i class="ri-money-dollar-box-line me-2"></i>Rekonsiliasi Kas Terbaru
-                    </h5>
-                    <a href="{% url 'fraud_detection:cash_list' %}" class="btn btn-sm btn-label-primary">Lihat Semua</a>
+                    }
+    {% endif %}" class="btn btn-sm btn-label-primary">Lihat Semua</a>
                 </div>
                 <div class="card-body">
                     {% if recent_reconciliations %}

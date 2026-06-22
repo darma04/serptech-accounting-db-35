@@ -455,8 +455,11 @@ Fitur: filter tipe akun, export Excel & PDF, cards ringkasan, seed CoA.
     .datatables-coa thead th { font-weight: 600; font-size: 0.8125rem; }
     @media (max-width: 768px) {
         .card-datatable { overflow-x: hidden !important; -webkit-overflow-scrolling: touch; max-width: 100%; }
-        {% if akun_list %}.datatables-coa { min-width: 800px !important; }{% endif %}
+        
         .dataTables_wrapper { overflow-x: hidden !important; max-width: 100% !important; }
+    {% if akun_list %}
+    @media (max-width: 768px) {.datatables-coa { min-width: 800px !important; }}
+    {% endif %}
     }
 </style>
 
@@ -533,6 +536,10 @@ const PDF_INFO = {
 };
 
 function exportToExcel() {
+
+    const table = document.getElementById('coaTable');
+    if (!table) return;
+
     const tableObj = new $.fn.dataTable.Api('#coaTable');
     let visibleColumns = [];
     tableObj.columns().every(function(index) {
@@ -588,6 +595,10 @@ function exportToExcel() {
 function exportToPDF() {
     if (typeof pdfMake === 'undefined') { alert('pdfMake library tidak tersedia!'); return; }
     
+    
+    const table = document.getElementById('coaTable');
+    if (!table) return;
+
     const tableObj = new $.fn.dataTable.Api('#coaTable');
     const headers = []; let visibleColumns = [];
     

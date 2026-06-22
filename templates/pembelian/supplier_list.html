@@ -362,16 +362,19 @@
             max-width: 100%
         }
 
-        {% if supplier_list %}.datatables-supplier {
-            min-width: 1000px !important;
-            width: 1000px !important;
-            table-layout: auto !important
-        }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important
         }
+    {% if supplier_list %}
+    @media (max-width:768px) {.datatables-supplier {
+            min-width: 1000px !important;
+            width: 1000px !important;
+            table-layout: auto !important
+        }}
+    {% endif %}
     }
 </style>
 <script>

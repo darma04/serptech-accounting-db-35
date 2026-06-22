@@ -363,12 +363,15 @@ Fitur: tambah, edit, hapus customer. Tabel: nama, kontak, alamat, aksi.
             max-width: 100%;
         }
 
-        {% if customer_list %}.datatables-customer { min-width: 1000px !important; }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important;
         }
+    {% if customer_list %}
+    @media (max-width: 768px) {.datatables-customer { min-width: 1000px !important; }}
+    {% endif %}
     }
 </style>
 <script>

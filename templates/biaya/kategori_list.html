@@ -312,16 +312,19 @@ Fitur: tambah, edit, hapus kategori biaya.
             max-width: 100%
         }
 
-        {% if kategori_list %}.datatables-kategori {
-            min-width: 800px !important;
-            width: 800px !important;
-            table-layout: auto !important
-        }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important
         }
+    {% if kategori_list %}
+    @media (max-width:768px) {.datatables-kategori {
+            min-width: 800px !important;
+            width: 800px !important;
+            table-layout: auto !important
+        }}
+    {% endif %}
     }
 </style>
 <script>

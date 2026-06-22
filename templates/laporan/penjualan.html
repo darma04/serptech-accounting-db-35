@@ -257,11 +257,7 @@
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
-        {% if customer_list %}
-
-        {% if customer_list %}
-
-
+        {% if sales_order_list %}
         <div class="card-datatable table-responsive">
             <table class="table table-hover" id="salesTable">
                 <thead>
@@ -366,85 +362,21 @@
                 </tfoot>
             </table>
         </div>
-
-
         {% else %}
-
-
         <div class="card-body">
-
-
             <div class="text-center py-4 py-md-5 px-3 px-md-4">
-
-
                 <div class="mb-4">
-
-
                     <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
-
-
                          style="width: 88px; height: 88px;">
-
-
-                        <i class="ri-shopping-bag-line" style="font-size: 2.8rem;"></i>
-
-
+                        <i class="ri-shopping-cart-line" style="font-size: 2.8rem;"></i>
                     </div>
-
-
                 </div>
-
-
                 <h5 class="mb-3">Belum Ada Penjualan</h5>
-
-
                 <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-
-
-                    Daftar penjualan masih kosong.
-
-
+                    Daftar penjualan masih kosong. Silakan buat Sales Order terlebih dahulu.
                 </p>
-
-
             </div>
-
-
         </div>
-
-
-        {% endif %}
-
-        {% else %}
-
-        <div class="card-body">
-
-            <div class="text-center py-4 py-md-5 px-3 px-md-4">
-
-                <div class="mb-4">
-
-                    <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
-
-                         style="width: 88px; height: 88px;">
-
-                        <i class="ri-shopping-bag-line" style="font-size: 2.8rem;"></i>
-
-                    </div>
-
-                </div>
-
-                <h5 class="mb-3">Belum Ada Penjualan</h5>
-
-                <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-
-                    Daftar penjualan masih kosong.
-
-                </p>
-
-            </div>
-
-        </div>
-
         {% endif %}
     </div>
 
@@ -461,6 +393,7 @@
                         class="ri-file-pdf-line me-1"></i>Export PDF</button>
             </div>
         </div>
+        {% if pos_transaction_list %}
         <div class="card-datatable table-responsive">
             <table class="table table-hover" id="posTable">
                 <thead>
@@ -551,6 +484,22 @@
                 </tfoot>
             </table>
         </div>
+        {% else %}
+        <div class="card-body">
+            <div class="text-center py-4 py-md-5 px-3 px-md-4">
+                <div class="mb-4">
+                    <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width: 88px; height: 88px;">
+                        <i class="ri-store-2-line" style="font-size: 2.8rem;"></i>
+                    </div>
+                </div>
+                <h5 class="mb-3">Belum Ada Transaksi POS</h5>
+                <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
+                    Daftar transaksi POS masih kosong. Silakan lakukan transaksi POS terlebih dahulu.
+                </p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock content %}

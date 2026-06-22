@@ -301,7 +301,10 @@ Filter, export Excel/PDF, DataTable standar, konsisten dengan CoA & produk.
     .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #696cff !important; color: white !important; border: none; }
     .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.disabled) { background: rgba(105,108,255,0.08) !important; border: none; color: #696cff !important; }
     .card-datatable { padding-bottom: 0; }
-    @media (max-width: 768px) { {% if periode_list %}#periodeTable { min-width: 700px !important; }{% endif %} }
+    @media (max-width: 768px) {  }
+    {% if periode_list %}
+    @media (max-width: 768px) {#periodeTable { min-width: 700px !important; }}
+    {% endif %}
 </style>
 <script>
 

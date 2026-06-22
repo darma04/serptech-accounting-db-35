@@ -301,16 +301,19 @@
             max-width: 100%
         }
 
-        {% if permissions %}.datatables-permissions {
-            min-width: 900px !important;
-            width: 900px !important;
-            table-layout: auto !important
-        }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important
         }
+    {% if permissions %}
+    @media (max-width:768px) {.datatables-permissions {
+            min-width: 900px !important;
+            width: 900px !important;
+            table-layout: auto !important
+        }}
+    {% endif %}
     }
 </style>
 <script>

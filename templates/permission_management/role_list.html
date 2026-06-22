@@ -501,16 +501,19 @@
             max-width: 100%
         }
 
-        {% if roles %}.datatables-users {
-            min-width: 800px !important;
-            width: 800px !important;
-            table-layout: auto !important
-        }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important
         }
+    {% if roles %}
+    @media (max-width:576px) {.datatables-users {
+            min-width: 800px !important;
+            width: 800px !important;
+            table-layout: auto !important
+        }}
+    {% endif %}
         
         .datatables-users th,
         .datatables-users td {

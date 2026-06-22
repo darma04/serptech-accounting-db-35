@@ -387,6 +387,14 @@
     @media (max-width: 768px) { .card-datatable { overflow-x: hidden !important; } .datatables-absensi { min-width: 800px !important; } }
 </style>
 
+{% if absensi_list %}
+<style>
+    @media (max-width: 768px) {
+        .datatables-absensi { min-width: 800px !important; }
+    }
+</style>
+{% endif %}
+
 <script>
 let dataTable;
 
@@ -395,7 +403,6 @@ $(document).ready(function() {
     flatpickr('#tanggalMulai', { dateFormat: 'Y-m-d', locale: 'id' });
     flatpickr('#tanggalAkhir', { dateFormat: 'Y-m-d', locale: 'id' });
 
-    {% if absensi_list %}
     {% if karyawan_list %}
     dataTable = $('#absensiTable').DataTable({
         language: {
@@ -410,7 +417,6 @@ $(document).ready(function() {
         columnDefs: [{ orderable: false, targets: [7] }],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
     });
-    {% endif %}
     {% endif %}
 });
 

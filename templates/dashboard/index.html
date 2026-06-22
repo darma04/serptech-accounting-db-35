@@ -213,12 +213,15 @@
 {{ sales_chart_data|json_script:"sales-chart-data" }} 
 {{ sales_chart_labels|json_script:"sales-chart-labels" }}
 
-{% if sales_cabang_series %}
+
+
+{{ block.super }
+    {% if sales_cabang_series %}
+    @media (max-width: 576px) {
 {{ sales_cabang_labels|json_script:"sales-cabang-labels" }}
 {{ sales_cabang_series|json_script:"sales-cabang-series" }}
-{% endif %}
-
-{{ block.super }}
+}
+    {% endif %}}
 <script src="{% static 'vendor/libs/swiper/swiper.js' %}"></script>
 <script>
   'use strict';  

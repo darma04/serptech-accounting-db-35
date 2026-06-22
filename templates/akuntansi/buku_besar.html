@@ -330,14 +330,17 @@ Filter akun/periode/cabang, tabel mutasi D/K/saldo berjalan, export.
     .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { padding: 0 1.5rem 1rem; }
     .dataTables_wrapper .dataTables_filter input { border: 1px solid #d9dee3; border-radius: .375rem; padding: .4375rem .875rem; }
     .dataTables_wrapper .dataTables_paginate .paginate_button.current { background: #696cff !important; color: #fff !important; border: none; }
-    @media (max-width: 768px) { .card-datatable { overflow-x: auto; } table { min-width: 700px; } }
+    @media (max-width: 768px) { .card-datatable { overflow-x: hidden !important; } table { min-width: 700px; } }
 </style>
 <script>
 $(document).ready(function() {
     flatpickr('#startDate', {dateFormat:'Y-m-d'});
     flatpickr('#endDate', {dateFormat:'Y-m-d'});
 
+    
+}
     {% if buku_besar %}
+    @media (max-width: 768px) {
 
     let chartLabels = {{ chart_labels|safe }};
     let chartSaldo = {{ chart_saldo|safe }};
@@ -378,8 +381,8 @@ $(document).ready(function() {
         });
         window.__saldoChart = saldoChartInstance;
     }
-    {% endif %}
-});
+    }
+    {% endif %});
 function toggleBBColumns() {
     const dt = new $.fn.dataTable.Api('#bukuBesarTable');
     

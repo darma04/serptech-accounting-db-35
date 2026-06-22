@@ -353,16 +353,19 @@
             max-width: 100%
         }
 
-        {% if gudang_list %}.datatables-gudang {
-            min-width: 700px !important;
-            width: 700px !important;
-            table-layout: auto !important
-        }{% endif %}
+        
 
         .dataTables_wrapper {
             overflow-x: hidden !important;
             max-width: 100% !important
         }
+    {% if gudang_list %}
+    @media (max-width:768px) {.datatables-gudang {
+            min-width: 700px !important;
+            width: 700px !important;
+            table-layout: auto !important
+        }}
+    {% endif %}
     }
 </style>
 <script>

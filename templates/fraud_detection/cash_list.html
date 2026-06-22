@@ -809,8 +809,12 @@
     }
 
     function exportToPDF() {
+
         if (typeof $ === "undefined" || typeof $.fn.dataTable === "undefined" || !$.fn.dataTable.isDataTable('#tabelRekon')) { alert('Tidak ada data untuk di-export. Silakan tambahkan data terlebih dahulu.'); return; }
         if (typeof pdfMake === 'undefined') { alert('pdfMake library tidak tersedia!'); return; }
+        const table = document.getElementById('tabelRekon');
+        if (!table) return;
+
         const tableObj = new $.fn.dataTable.Api('#tabelRekon');
         const headers = []; let visibleColumns = [];
         tableObj.columns().every(function (index) {

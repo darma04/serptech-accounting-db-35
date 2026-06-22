@@ -562,7 +562,10 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
     let dataTable;
 
     $(document).ready(function () {
-        {% if penggajian_list %}
+        
+    }
+    {% if penggajian_list %}
+    @media (max-width: 768px) {
         dataTable = $('#penggajianTable').DataTable({
             language: {
                 "sEmptyTable": "Tidak ada data", "sLengthMenu": "Tampilkan _MENU_ data", "sSearch": "Cari:",
@@ -576,8 +579,8 @@ Tabel: periode, karyawan, gaji pokok, tunjangan, potongan, total.
             columnDefs: [{ orderable: false, targets: [7] }],
             dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"table-responsive"rt><"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         });
-        {% endif %}
-    });
+        }
+    {% endif %});
 
     function applyFilter() {
         if (!dataTable) return;

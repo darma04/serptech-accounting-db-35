@@ -555,8 +555,8 @@ LAPORAN CABANG - Laporan Performa per Cabang/Gudang
                             title="Total terjual dari SO + POS di cabang ini">{{ p.qty|floatformat:0 }} unit</span>
                     </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -570,6 +570,7 @@ LAPORAN CABANG - Laporan Performa per Cabang/Gudang
                 <span class="badge bg-label-info">{{ total_absensi_record }} Record</span>
             </div>
         </div>
+        {% if absensi_list_cabang %}
         <div class="card-datatable table-responsive">
             <table class="datatables-absensi-cabang table table-hover" id="tabelAbsensiCabang">
                 <thead>
@@ -616,22 +617,23 @@ LAPORAN CABANG - Laporan Performa per Cabang/Gudang
                 </tbody>
             </table>
         </div>
-    </div>
-    </div>
-    {% else %}
-    <div class="card-body">
-        <div class="text-center py-4 py-md-5 px-3 px-md-4">
-            <div class="mb-4">
-                <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
-                     style="width: 88px; height: 88px;">
-                    <i class="ri-calendar-check-line" style="font-size: 2.8rem;"></i>
+        {% else %}
+        <div class="card-body">
+            <div class="text-center py-4 py-md-5 px-3 px-md-4">
+                <div class="mb-4">
+                    <div class="bg-label-secondary rounded-circle d-inline-flex align-items-center justify-content-center"
+                         style="width: 88px; height: 88px;">
+                        <i class="ri-calendar-check-line" style="font-size: 2.8rem;"></i>
+                    </div>
                 </div>
+                <h5 class="mb-3">Belum Ada Data Absensi</h5>
+                <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
+                    Belum ada riwayat absensi yang tercatat di cabang ini.
+                </p>
             </div>
-            <h5 class="mb-3">Belum Ada Data Absensi</h5>
-            <p class="text-muted mb-5" style="max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.7;">
-                Belum ada data absensi di cabang ini.
-            </p>
         </div>
+        {% endif %}
+    </div>
     </div>
     {% endif %}
 </div>
@@ -651,7 +653,13 @@ LAPORAN CABANG - Laporan Performa per Cabang/Gudang
 .card-datatable{padding-bottom:0;}
 .datatables-cabang thead th{font-weight:600;font-size:.8125rem;text-transform:none;letter-spacing:0;}
 @media(max-width:768px){.card-datatable{overflow-x: hidden !important;-webkit-overflow-scrolling:touch;max-width:100%;}.datatables-cabang{min-width:1200px!important;}.dataTables_wrapper{overflow-x: hidden !important;max-width:100%!important;}}
-@media(max-width:575.98px){.summary-nominal{font-size:10px!important;white-space:nowrap;}.card-info .card-text{font-size:.68rem;margin-bottom:.15rem!important;line-height:1.2;}.card-body{padding:.5rem .6rem!important;}}
+
+@media(max-width:575.98px){.summary-nominal{font-size:10px!important;white-space:nowrap;}
+    {% if absensi_list_cabang %}
+    @media(max-width:768px){
+@media(max-width:768px){#tabelAbsensiCabang { min-width: 900px !important; }}
+}
+    {% endif %}.card-info .card-text{font-size:.68rem;margin-bottom:.15rem!important;line-height:1.2;}.card-body{padding:.5rem .6rem!important;}}
 @media(min-width:576px) and (max-width:767.98px){.summary-nominal{font-size:.9rem!important;}}
 @media(min-width:768px) and (max-width:991.98px){.summary-nominal{font-size:1.05rem!important;}}
 </style>

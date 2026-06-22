@@ -161,7 +161,10 @@
 </div>
 {% endblock content %}
 {% block page_js %}
-<style>.card-datatable{padding-bottom:0}.dataTables_wrapper .dataTables_info{padding:1rem 1.5rem;font-size:.875rem}.dataTables_wrapper .dataTables_paginate{padding:1rem 1.5rem}.dataTables_wrapper .dataTables_length,.dataTables_wrapper .dataTables_filter{padding:0 1.5rem 1rem}.dataTables_wrapper .dataTables_filter input{border:1px solid #d9dee3;border-radius:.375rem;padding:.4375rem .875rem}.dataTables_wrapper .dataTables_paginate .paginate_button.current{background:#696cff!important;color:#fff!important;border:none}@media(max-width:768px){.card-datatable{overflow-x:hidden!important}{% if faktur_list %}#fakturTable{min-width:900px!important}{% endif %}}</style>
+<style>.card-datatable{padding-bottom:0}.dataTables_wrapper .dataTables_info{padding:1rem 1.5rem;font-size:.875rem}.dataTables_wrapper .dataTables_paginate{padding:1rem 1.5rem}.dataTables_wrapper .dataTables_length,.dataTables_wrapper .dataTables_filter{padding:0 1.5rem 1rem}.dataTables_wrapper .dataTables_filter input{border:1px solid #d9dee3;border-radius:.375rem;padding:.4375rem .875rem}.dataTables_wrapper .dataTables_paginate .paginate_button.current{background:#696cff!important;color:#fff!important;border:none}@media(max-width:768px){.card-datatable{overflow-x:hidden!important}}
+    {% if faktur_list %}
+    @media(max-width:768px){#fakturTable{min-width:900px!important}}
+    {% endif %}</style>
 <script>
 $(document).ready(function(){
     flatpickr('#startDate',{dateFormat:'Y-m-d'});
@@ -211,6 +214,10 @@ function toggleColumns(){
 function selectAllColumns(){document.querySelectorAll('.column-checkbox').forEach(cb=>{cb.checked=true;});toggleColumns();}
 function deselectAllColumns(){document.querySelectorAll('.column-checkbox').forEach(cb=>{cb.checked=false;});toggleColumns();}
 function exportExcel() {
+
+    const table = document.getElementById('fakturTable');
+    if (!table) return;
+
     const tableObj = new $.fn.dataTable.Api('#fakturTable');
     let visibleColumns = [];
     tableObj.columns().every(function(index) {
@@ -266,6 +273,10 @@ function exportExcel() {
 function exportPDF() {
     if (typeof pdfMake === 'undefined') { alert('pdfMake library tidak tersedia!'); return; }
     
+    
+    const table = document.getElementById('fakturTable');
+    if (!table) return;
+
     const tableObj = new $.fn.dataTable.Api('#fakturTable');
     const headers = []; let visibleColumns = [];
     
